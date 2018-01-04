@@ -3,5 +3,5 @@ language: java
 install: true
 
 script:
-  gradle antlr
-  gradle build
+  - gradle antlr
+  - gradle build
