@@ -1,0 +1,4 @@
+*.class
+build
+.gradle
+src/main/java/antlr

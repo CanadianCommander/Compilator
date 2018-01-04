@@ -1,4 +1,7 @@
 language: java
 
+install: true
+
 script:
-  javac Main.java
+  gradle antlr
+  gradle build
