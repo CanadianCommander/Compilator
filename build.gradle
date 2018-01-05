@@ -1,10 +1,10 @@
-apply plugin: 'java'
+apply plugin: 'scala'
 
 jar {
   baseName = 'Compilator'
   version  = '0.1.0'
   manifest {
-        attributes 'Main-Class': 'Main'
+        attributes 'Main-Class': 'frontend.Main'
   }
 }
 
@@ -18,6 +18,11 @@ targetCompatibility = 1.8
 dependencies {
   compile("org.antlr:antlr-runtime:3.0")
   compile("org.antlr:antlr:3.0")
+  compile("org.scala-lang:scala-library:2.12.4")
+}
+
+tasks.withType(ScalaCompile){
+  scalaCompileOptions.additionalParameters = ["-feature"]
 }
 
 task(antlr){
@@ -30,7 +35,7 @@ task(antlr){
     def classP  = sourceSets.main.runtimeClasspath.asPath
     def std_out = new StringBuilder()
     def std_err = new StringBuilder()
-    def process = "java -cp $classP org.antlr.Tool -fo ./src/main/java/antlr src/main/antlr/$ext.antlrFile".execute()
+    def process = "java -cp $classP org.antlr.Tool -fo ./src/main/scala/antlr src/main/antlr/$ext.antlrFile".execute()
 
     process.consumeProcessOutput(std_out,std_err)
     process.waitFor()

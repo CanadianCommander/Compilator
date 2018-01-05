@@ -1,4 +1,5 @@
 *.class
 build
 .gradle
-src/main/java/antlr
+src/main/scala/antlr
+compilator.log 
