@@ -1,5 +1,7 @@
 import org.scalatest._
+import scala.collection.JavaConversions._
 import org.antlr.runtime._
+import java.io.File
 
 import util.logging.Logger._
 import compiler.CompilationManager
@@ -12,21 +14,42 @@ class LexerTest extends FlatSpec {
   "valid .ul files" should "pass lexer and parser" in {
     val compManager = setup()
 
-    val prefix = "src/test/scala/resource/valid/"
-    assert(compManager.compile(s"${prefix}/accept1.ul"))
-
+    val ulFiles = getULFilesInDir("src/test/scala/resource/valid/")
+    ulFiles.foreach((f) => {
+      println(s"testing: $f")
+      assert(compManager.compile(f))
+    })
   }
 
   "invalid .ul files" should "fail parser or lexer" in {
     val compManager = setup()
 
-    val prefix = "src/test/scala/resource/invalid/"
-    assert(!compManager.compile(s"${prefix}/reject1.ul"))
+    val ulFiles = getULFilesInDir("src/test/scala/resource/invalid/")
+    ulFiles.foreach((f) => {
+      println(s"testing: $f")
+      assert(!compManager.compile(f))
+    })
+  }
+
+  def getULFilesInDir(dir: String): List[String] = {
+    val dirFd = new File(dir)
+
+    if(dirFd.isDirectory){
+      return (dirFd.listFiles()).toList.filter((f) => {
+                                          var ext = (f.getAbsolutePath.split("\\.(?=[\\w\\d]+$)"))
+                                          if(ext.size < 2){
+                                            false
+                                          }
+                                          else{
+                                            ext(1).compare("ul") == 0
+                                          }
+                                        })
+                                        .map((f) => f.getAbsolutePath())
+    }
+    return null
   }
 
   def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,Boolean] = {
-    closeLog()
-    setLogFilePath("compilator.log")
     return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Boolean]
                                   (new DefaultLexerFactory(), new DefaultParserFactory(),
                                    new lexerTestFactory())

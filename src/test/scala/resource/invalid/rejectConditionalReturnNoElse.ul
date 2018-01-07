@@ -1,0 +1,8 @@
+int main(int pay){
+  if(pay < 10){
+    return pay*10;
+  }
+  {
+    return pay*5;
+  }
+}

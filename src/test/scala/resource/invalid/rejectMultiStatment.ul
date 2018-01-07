@@ -1,0 +1,5 @@
+void main(string name, int age){
+  println name ;
+  age = * 2 age ;
+  return age;
+}

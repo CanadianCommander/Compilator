@@ -1,20 +1,28 @@
 grammar ulNoActions;
 
+@header {
+  package org.antlr.runtime;
+}
+
+@lexer::header{
+  package org.antlr.runtime;
+}
+
 @members
 {
-protected void mismatch (IntStream input, int ttype, BitSet follow)
-        throws RecognitionException
-{
-        throw new MismatchedTokenException(ttype, input);
-}
-public void recoverFromMismatchedSet (IntStream input,
-                                      RecognitionException e,
-                                      BitSet follow)
-        throws RecognitionException
-{
-        reportError(e);
-        throw e;
-}
+  protected void mismatch (IntStream input, int ttype, BitSet follow)
+          throws RecognitionException
+  {
+          throw new MismatchedTokenException(ttype, input);
+  }
+  public void recoverFromMismatchedSet (IntStream input,
+                                        RecognitionException e,
+                                        BitSet follow)
+          throws RecognitionException
+  {
+          reportError(e);
+          throw e;
+  }
 }
 
 @rulecatch {
@@ -24,25 +32,68 @@ public void recoverFromMismatchedSet (IntStream input,
         }
 }
 
-@header {
-  package org.antlr.runtime;
-}
+program : function+
+	      ;
 
-@lexer::header{
-  package org.antlr.runtime;
-}
+function : functionDecl functionBody
+         ;
 
-program : IF NEWLINE
-	;
+functionDecl : compoundType ID '(' formalParams? ')'
+             ;
 
+formalParams : compoundType ID (',' formalParams)?
+             ;
+
+functionBody : '{' statment* '}'
+             ;
+
+compoundType : TYPE | (TYPE '[' INTEGERCONST ']')
+             ;
+
+statment     : ((expression | (PRINT_KEYWORD expression) | (RETURN_KEYWORD expression?) | (ID '=' expression) | (ID '[' expression ']' '=' expression) )? ';') |
+               ((WHILE_KEYWORD '(' expression ')' block) | (IF_KEYWORD '(' expression ')' block (ELSE_KEYWORD block)?))
+             ;
+
+expression : (literal | ID | ('(' expression ')'))  (OPERATOR expression)?
+           ;
+
+block      : '{' statment* '}'
+           ;
+
+literal        : INTEGERCONST
+               ;
 
 /* Lexer */
 
-IF	: 'if'
-	;
+PRINT_KEYWORD : ('print' | 'println')
+              ;
 
-/* NB: This will not be part of your grammar.  Whitespace should be ignored.
-       This is only here so that you have a complete example
- */
-NEWLINE: '\n'
-	;
+RETURN_KEYWORD: 'return'
+              ;
+
+ELSE_KEYWORD  :'else'
+              ;
+
+IF_KEYWORD    :'if'
+              ;
+
+WHILE_KEYWORD :'while'
+              ;
+
+TYPE    : ('int' | 'float' | 'char' | 'string' | 'boolean' | 'void')
+        ;
+
+OPERATOR : ('==' | '<' | '+' | '-' | '*')
+         ;
+
+ID      : ('a'..'z' | 'A'..'Z')+
+        ;
+
+INTEGERCONST : ('0'..'9')+
+             ;
+
+WS      : ( '\t' | ' ' | ('\r' | '\n') )+ { $channel = HIDDEN;}
+        ;
+
+COMMENT : '//' ~('\r' | '\n')* ('\r' | '\n') { $channel = HIDDEN;}
+        ;

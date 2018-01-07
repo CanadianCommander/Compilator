@@ -27,6 +27,10 @@ dependencies {
   testRuntime('org.pegdown:pegdown:1.4.2')
 }
 
+test {
+    maxParallelForks = 1
+}
+
 tasks.withType(ScalaCompile){
   scalaCompileOptions.additionalParameters = ["-feature"]
 }
@@ -36,17 +40,17 @@ task(antlr){
   ext.antlrFile = "ulNoActions.g"
 
   doFirst {
-    println "running: java org.antlr.Tool -fo . src/main/antlr/$ext.antlrFile"
-
+    println "java -cp CLASSPATH org.antlr.Tool -fo ./src/main/scala/antlr src/main/antlr/$ext.antlrFile"
     def classP  = sourceSets.main.runtimeClasspath.asPath
     def std_out = new StringBuilder()
     def std_err = new StringBuilder()
+
     def process = "java -cp $classP org.antlr.Tool -fo ./src/main/scala/antlr src/main/antlr/$ext.antlrFile".execute()
 
     process.consumeProcessOutput(std_out,std_err)
     process.waitFor()
 
-    println "$std_out"
+    println "$std_out $std_err"
     if(process.exitValue() != 0){
       throw new GradleException("ERROR: $std_err")
     }

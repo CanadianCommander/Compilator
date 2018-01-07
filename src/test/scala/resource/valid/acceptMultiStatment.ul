@@ -1,0 +1,5 @@
+boolean main (string name, int age){
+  println name;
+  age = age * 2;
+  return age;
+}
