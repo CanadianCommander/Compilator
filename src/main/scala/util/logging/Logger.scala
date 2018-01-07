@@ -33,6 +33,10 @@ object Logger {
     }
   }
 
+  def closeLog(){
+    logStream = null
+  }
+
   //insure that log is open.
   def insureLogOpen: Boolean = {
     if(!isLogOpen){

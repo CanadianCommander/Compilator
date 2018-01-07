@@ -8,8 +8,7 @@ object Main {
 
     //start logging
     openLog(true)
-    logMsg("HELLO YOU GUYS", Level.DEBUG)
-    //compile down here
 
+    //compile down here
   }
 }

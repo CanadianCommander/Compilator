@@ -1,5 +1,5 @@
 grammar ulNoActions;
-				
+
 @members
 {
 protected void mismatch (IntStream input, int ttype, BitSet follow)
@@ -24,17 +24,25 @@ public void recoverFromMismatchedSet (IntStream input,
         }
 }
 
+@header {
+  package org.antlr.runtime;
+}
+
+@lexer::header{
+  package org.antlr.runtime;
+}
+
 program : IF NEWLINE
 	;
 
 
 /* Lexer */
-	 
+
 IF	: 'if'
 	;
 
-/* NB: This will not be part of your grammar.  Whitespace should be ignored.  
-       This is only here so that you have a complete example 
+/* NB: This will not be part of your grammar.  Whitespace should be ignored.
+       This is only here so that you have a complete example
  */
 NEWLINE: '\n'
 	;

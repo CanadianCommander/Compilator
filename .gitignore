@@ -2,4 +2,5 @@
 build
 .gradle
 src/main/scala/antlr
-compilator.log 
+compilator.log
+foobar.log
