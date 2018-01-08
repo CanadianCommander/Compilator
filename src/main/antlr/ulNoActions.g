@@ -44,25 +44,44 @@ functionDecl : compoundType ID '(' formalParams? ')'
 formalParams : compoundType ID (',' formalParams)?
              ;
 
-functionBody : '{' statment* '}'
+functionBody : '{' variableDec* (statmentT1 | statmentT2 | statmentT3)* '}'
              ;
+
+variableDec : compoundType ID ';'
+            ;
 
 compoundType : TYPE | (TYPE '[' INTEGERCONST ']')
              ;
 
-statment     : ((expression | (PRINT_KEYWORD expression) | (RETURN_KEYWORD expression?) | (ID '=' expression) | (ID '[' expression ']' '=' expression) )? ';') |
-               ((WHILE_KEYWORD '(' expression ')' block) | (IF_KEYWORD '(' expression ')' block (ELSE_KEYWORD block)?))
-             ;
-
-expression : (literal | ID | ('(' expression ')'))  (OPERATOR expression)?
+statmentT1 : ((PRINT_KEYWORD expression) | (RETURN_KEYWORD expression?) | (varReference '=' expression)) ';'
            ;
 
-block      : '{' statment* '}'
+statmentT2 : ((WHILE_KEYWORD '(' expression ')' block) | (IF_KEYWORD '(' expression ')' block (ELSE_KEYWORD block)?))
            ;
 
-literal        : INTEGERCONST
+statmentT3 : functionCall ';'
+           ;
+
+expression: ('(' expressionHelper ')' (OPERATOR expression)?) | expressionHelper
+          ;
+
+expressionHelper : (literal | varReference | functionCall)  (OPERATOR expression)?
+           ;
+
+expressionList : expression (',' expression)?
                ;
 
+varReference: ID | (ID '[' expression ']')
+            ;
+
+functionCall: ID '(' expressionList? ')'
+            ;
+
+block      : '{' (statmentT1 | statmentT2 | statmentT3)* '}'
+           ;
+
+literal        : INTEGERCONST | STRING_CONST | FLOAT_CONST | CHAR_CONST | TRUE_CONST | FALSE_CONST
+               ;
 /* Lexer */
 
 PRINT_KEYWORD : ('print' | 'println')
@@ -83,14 +102,26 @@ WHILE_KEYWORD :'while'
 TYPE    : ('int' | 'float' | 'char' | 'string' | 'boolean' | 'void')
         ;
 
-OPERATOR : ('==' | '<' | '+' | '-' | '*')
+OPERATOR : ('==' |'<' | '+' | '-' | '*')
          ;
 
-ID      : ('a'..'z' | 'A'..'Z')+
+ID      : ('a'..'z' | 'A'..'Z' | '_')('a'..'z' | 'A'..'Z' | '_' | '0'..'9')*
         ;
 
 INTEGERCONST : ('0'..'9')+
              ;
+
+STRING_CONST : '"' (~'"')* '"'
+             ;
+
+FLOAT_CONST  : ('0'..'9')*'.'('0'..'9')+
+             ;
+
+CHAR_CONST   : '\''('a'..'z' | 'A'..'Z')'\''
+             ;
+
+TRUE_CONST   : 'true';
+FALSE_CONST  : 'false';
 
 WS      : ( '\t' | ' ' | ('\r' | '\n') )+ { $channel = HIDDEN;}
         ;

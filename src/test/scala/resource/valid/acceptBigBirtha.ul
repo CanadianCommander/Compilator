@@ -1,0 +1,15 @@
+boolean main(int[100] numbers){
+  string _bob123;
+  int count;
+  int cMax;
+  cMax = 100;
+  count = 1;
+  _bob123 = "this is a string 32432432 _ var ;;;;";
+  println numbers[20];
+
+  while(count < cMax){
+    count = count - 1;
+    println count + "bottles of beer on the wall " + count + "bottles of beer! take one down pass it around " + (count - 1) + "bottles of beer on the wall";
+  }
+  return true;
+}

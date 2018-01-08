@@ -1,0 +1,6 @@
+boolean main(int[100] numbers){
+  string 8bob;
+  println numbers[20];
+  return pow(numbers[1]);
+  fun()->invokeMagic(a);
+}
