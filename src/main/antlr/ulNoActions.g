@@ -66,7 +66,7 @@ expressionHelper : (OPERATOR expression expressionHelper)?
            ;
 
 
-expressionList : expression (',' expression)?
+expressionList : expression (',' expression)*
                ;
 
 varReference: ID | (ID '[' expression ']')

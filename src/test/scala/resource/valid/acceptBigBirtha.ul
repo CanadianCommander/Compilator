@@ -11,5 +11,10 @@ boolean main(int[100] numbers){
     count = count - 1;
     println count + "bottles of beer on the wall " + count + "bottles of beer! take one down pass it around " + (count - 1) + "bottles of beer on the wall";
   }
+  add(1,1);
   return function(true,false);
+}
+
+int add(int a, int b){
+  return a + b;
 }

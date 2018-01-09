@@ -19,6 +19,7 @@ class LexerTest extends FlatSpec {
       println(s"testing: $f")
       assert(compManager.compile(f))
     })
+    println(s"\n////////////// ${ulFiles.size} files tested for accept /////////////////////\n");
   }
 
   "invalid .ul files" should "fail parser or lexer" in {
@@ -29,6 +30,7 @@ class LexerTest extends FlatSpec {
       println(s"testing: $f")
       assert(!compManager.compile(f))
     })
+    println(s"\n////////////// ${ulFiles.size} files tested for reject /////////////////////\n");
   }
 
   def getULFilesInDir(dir: String): List[String] = {

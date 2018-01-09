@@ -1,0 +1,3 @@
+void main(){
+  func(func(func(true, bill[34];)));
+}

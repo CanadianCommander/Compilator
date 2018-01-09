@@ -1,0 +1,3 @@
+void main(){
+  func(bob 34);
+}
