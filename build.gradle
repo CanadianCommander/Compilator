@@ -1,6 +1,8 @@
 
 plugins {
   id "com.github.maiflai.scalatest" version "0.18"
+  id "com.github.johnrengelman.shadow" version "2.0.2"
+  // to build super jar invoke "gralde shadowJar"
 }
 apply plugin: 'scala'
 
@@ -16,14 +18,11 @@ repositories {
   mavenCentral()
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 dependencies {
   compile("org.antlr:antlr-runtime:3.0")
   compile("org.antlr:antlr:3.0")
-  compile("org.scala-lang:scala-library:2.12.4")
-  testCompile('org.scalatest:scalatest_2.12:3.0.1')
+  compile("org.scala-lang:scala-library:2.11.12")
+  testCompile('org.scalatest:scalatest_2.11:3.0.1')
   testRuntime('org.pegdown:pegdown:1.4.2')
 }
 
@@ -32,7 +31,7 @@ test {
 }
 
 tasks.withType(ScalaCompile){
-  scalaCompileOptions.additionalParameters = ["-feature"]
+  scalaCompileOptions.additionalParameters = ["-feature","-target:jvm-1.7"]
 }
 
 task(antlr){
