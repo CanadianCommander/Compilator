@@ -1,6 +1,6 @@
 package util
 
-import java.io.{FileInputStream, FileOutputStream, FileNotFoundException}
+import java.io.{FileInputStream, FileOutputStream, FileNotFoundException, File, PrintStream}
 import java.lang.{SecurityException}
 
 import util.logging.Logger._
@@ -31,6 +31,32 @@ object General {
         throw e
       }
     }
+  }
+
+  def getULFilesInDir(dir: String): List[String] = {
+    val dirFd = new File(dir)
+
+    if(dirFd.isDirectory){
+      return (dirFd.listFiles()).toList.filter((f) => {
+                                          var ext = (f.getAbsolutePath.split("\\.(?=[\\w\\d]+$)"))
+                                          if(ext.size < 2){
+                                            false
+                                          }
+                                          else{
+                                            ext(1).compare("ul") == 0
+                                          }
+                                        })
+                                        .map((f) => f.getAbsolutePath())
+    }
+    return null
+  }
+
+  def printBarNotification(text: String, barNum: Int = 14, out: PrintStream = System.out){
+    out.print("\n")
+    (1 to barNum).foreach((x) => out.print("/"))
+    out.print(text)
+    (1 to barNum).foreach((x) => out.print("/"))
+    out.print("\n\n")
   }
 
 }

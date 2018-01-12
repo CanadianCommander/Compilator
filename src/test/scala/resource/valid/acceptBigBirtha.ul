@@ -2,7 +2,7 @@ boolean main(int[100] numbers){
   string _bob123;
   int count;
   int cMax;
-  cMax = 100;
+  cMax = 100 + 1 - 1 + 1 - 1;
   count = 1;
   _bob123 = "this is a string 32432432 _ var ;;;;";
   println numbers[20];
