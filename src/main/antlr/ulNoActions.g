@@ -94,46 +94,6 @@ statmentT2 returns [StatementNode sn]
               (ELSE_KEYWORD b3=block {ElseStatementNode elseSt = new ElseStatementNode();elseSt.addChild(b3);sn.addChild(elseSt);})?))
            ;
 
-//expression: ((literal expressionHelper) | (varReference expressionHelper) | ('(' expression ')' expressionHelper) | (functionCall expressionHelper))
-//          ;
-
-//expressionHelper : (OPERATOR expression expressionHelper)?
-//           ;
-/*
-expression      returns [ExpressionNode eNode]
-                : expression2 expression02
-                ;
-expression02    returns [ExpressionNode eNode]
-                : ((expressionAdd expression) | (expressionMult expression))?
-                ;
-expression2     returns [ExpressionNode eNode]
-                : ((expression2 expressionMult) | (expressionEnd))
-                ;
-
-expressionEnd   returns [ExpressionNode eNode]
-                : atom
-                ;
-// operators
-expressionAdd   : OPERATOR_ADD expression2
-                ;
-expressionSub   : OPERATOR_SUB INTEGERCONST
-                ;
-expressionMult  : OPERATOR_MULT expressionEnd
-                ;
-expressionLess  : OPERATOR_LESS INTEGERCONST
-                ;
-expressionEqual : OPERATOR_EQAUL INTEGERCONST
-                ;
-*/
-/*
-expression   [boolean skipExp] returns [ExpressionNode eNode]
-                @init {
-                  eNode = new ExpressionNode();
-                }
-                :((({!skipExp}?=> expression[true]) | atom) (eMult=expressionMult | eSub=expressionSub | eAdd=expressionAdd | eLess=expressionLess | eEqual=expressionEqual)?)
-                {eNode.addChild(eMult);eNode.addChild(eSub);eNode.addChild(eAdd);eNode.addChild(eLess);eNode.addChild(eEqual);}
-                ;
-*/
 expression      returns [ExpressionNode eNode]
                 @init {
                   eNode = new ExpressionNode();
@@ -163,13 +123,7 @@ expression1     returns [ExpressionNode eNode]
 work1           [ExpressionNode eNode]
                 : ((opSub=expressionSub | opAdd=expressionAdd) {eNode.addChild(opSub);eNode.addChild(opAdd);} (work1[eNode])?)?
                 ;
-/*expression00      returns [ExpressionNode eNode]
-                @init {
-                  eNode = new ExpressionNode();
-                }
-                : ((eMult=expressionMult |eSub=expressionSub | eAdd=expressionAdd | eLess=expressionLess | eEqual=expressionEqual)? a1=expression)?
-                ;
-*/
+
 expression2     returns [ExpressionNode eNode]
                 @init {
                   eNode = new ExpressionNode();
