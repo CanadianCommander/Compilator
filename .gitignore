@@ -4,3 +4,7 @@ build
 src/main/scala/antlr
 compilator.log
 foobar.log
+src/main/antlr/ulNoActions__.g
+src/main/antlr/ulNoActions.tokens
+src/main/antlr/ulNoActionsLexer.java
+src/main/antlr/ulNoActionsParser.java

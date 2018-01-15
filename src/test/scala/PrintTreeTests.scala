@@ -3,6 +3,7 @@ import org.antlr.runtime._
 import java.io.{InputStreamReader,BufferedReader,InputStream, PrintStream, PipedOutputStream, PipedInputStream}
 
 import util.logging.Logger._
+import compiler.ast.NodeBase
 import compiler.CompilationManager
 import compiler.lexer.DefaultLexerFactory
 import compiler.parser.DefaultParserFactory
@@ -56,7 +57,9 @@ class PrintTreeTests extends FlatSpec {
 class TreePrinterTestFactory extends SimpleFactory[ulNoActionsParser, TreePrinter] {
   override def create(parser: ulNoActionsParser): TreePrinter = {
     try{
-      return new TreePrinter(parser.program())
+      var root: NodeBase = parser.program()
+      cleanAST(root)
+      return new TreePrinter(root)
     }
     catch{
       case e : RecognitionException => {

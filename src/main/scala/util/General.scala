@@ -4,6 +4,8 @@ import java.io.{FileInputStream, FileOutputStream, FileNotFoundException, File, 
 import java.lang.{SecurityException}
 
 import util.logging.Logger._
+import compiler.ast.NodeBase
+import compiler.ast.nodes._
 
 //general util functions
 object General {
@@ -57,6 +59,18 @@ object General {
     out.print(text)
     (1 to barNum).foreach((x) => out.print("/"))
     out.print("\n\n")
+  }
+
+  def cleanAST(node: NodeBase){
+    node match{
+      case n: ExpressionNode =>{
+        n.removeRedudentChildren()
+        n.foreach((c) => cleanAST(c))
+      }
+      case n: NodeBase =>{
+        n.foreach((c)=>cleanAST(c))
+      }
+    }
   }
 
 }

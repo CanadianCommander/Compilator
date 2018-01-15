@@ -43,66 +43,55 @@ program returns [RootNode r]
         @init {
           r = new RootNode();
         }
-        : (
-          {FunctionNode fNode = new FunctionNode();}
-          function[fNode]
-          {fNode.setText($function.text);r.addChild(fNode);}
-          )+
-
+        : (f=function {r.addChild(f);})+
 	      ;
 
-function[FunctionNode fNode]
-        @init {
-          UNode fDec = new UNode();
-          FunctionBodyNode fBody = new FunctionBodyNode();
-        }
-        : functionDecl[fDec] functionBody[fBody]
-        {
-          fDec.setText($functionDecl.text);
-          fBody.setText($functionBody.text);
-          fNode.addChild(fDec);
-          fNode.addChild(fBody);
-        }
-        ;
+function returns [FunctionNode f]: fd=functionDecl fb=functionBody
+                                   {f=new FunctionNode(fd,fb);}
+                                 ;
 
-functionDecl[UNode fDec]
-            @init {
-              UNode cType = new UNode();
-              UNode id = new UNode();
-              UNode fParam = new UNode();
+functionDecl returns [FunctionDeclarationNode fdn]
+            @init{
+              fdn = new FunctionDeclarationNode();
+              FormalParamsNode fParam = new FormalParamsNode();
             }
-            :
-            compoundType {cType.setText($compoundType.text); fDec.addChild(cType);}
-            ID {id.setText($ID.text); fDec.addChild(id);}
-            '(' (formalParams {fParam.setText($formalParams.text); fDec.addChild(fParam);})? ')'
+            : cType = compoundType id=ID {fdn.addChild(cType);fdn.addChild(new UNode($id.text));} '(' (formalParams[fParam])? ')'  {fdn.addChild(fParam);}
             ;
 
-formalParams : compoundType ID (',' formalParams)?
-             ;
-
-functionBody[FunctionBodyNode fBody]
-              : '{' ({UNode vDec = createUNode(fBody);} variableDec[vDec] {vDec.setText($variableDec.text);})*
-                (({UNode st1 = createUNode(fBody);} statmentT1[st1] {st1.setText($statmentT1.text);})
-                | ({UNode st2 = createUNode(fBody);} statmentT2[st2] {st2.setText($statmentT2.text);}) )* '}'
+formalParams[FormalParamsNode topFp] returns [FormalParamsNode fpn]
+              @init{
+                  fpn = topFp;
+              }
+              : cType=compoundType ID {FunctionArgNode fArg = new FunctionArgNode(); fArg.addChild(cType); fArg.addChild(new UNode($ID.text));fpn.addChild(fArg);} (',' formalParams[fpn])?
               ;
 
-variableDec[UNode vDec] : compoundType ID ';'
+functionBody returns [FunctionBodyNode fbn]
+              @init {
+                fbn = new FunctionBodyNode();
+              }
+              : '{' (vD=variableDec {fbn.addChild(vD);})* (( st1=statmentT1 {fbn.addChild(st1);}) | (st2=statmentT2 {fbn.addChild(st2);}))* '}'
+              ;
+
+variableDec returns [VariableDeclarationNode varDec]
+            : cType=compoundType ID ';' {varDec = new VariableDeclarationNode(); varDec.addChild(cType); varDec.addChild(new UNode($ID.text));}
             ;
 
-compoundType : TYPE | (TYPE '[' INTEGERCONST ']')
-             ;
+compoundType returns [UNode typ]
+              : (TYPE {typ = new UNode($TYPE.text);}) | (TYPE '[' INTEGERCONST ']' {typ = new UNode($TYPE.text + '[' + $INTEGERCONST.text + "]");})
+              ;
 
-statmentT1[UNode st1]
-           :  ((
-                ({UNode exp = createUNode(st1);} PRINT_KEYWORD expP=expression[exp] {exp.setText($expP.text);})
-                | ({UNode assign = createUNode(st1); UNode target = createUNode(assign);}
-                  exp1=expression[target] {target.setText($exp1.text);} ({UNode source = createUNode(assign);} '=' exp2=expression[source] {source.setText($exp2.text);})?)
-              )? ';')
-              | ({UNode ret = createUNode(st1);ret.setText("return");} RETURN_KEYWORD
-                ({UNode exp = createUNode(ret);} expR=expression[exp] {exp.setText($expR.text);})? ';')
+statmentT1 returns [StatementNode sn]
+           :  ((({sn = new PrintStatementNode();} PRINT_KEYWORD expP=expression {sn.addChild(expP);sn.setText($PRINT_KEYWORD.text);})
+                | ({sn = new AssignStatementNode();} target=expression ('=' exp2=expression)? {sn.addChild(target);sn.addChild(exp2);}))?
+              ';')
+              | ({sn = new ReturnStatementNode();} RETURN_KEYWORD (exp=expression)? {sn.addChild(exp);}';')
            ;
 
-statmentT2[UNode st2] : ((WHILE_KEYWORD '(' expression[new UNode()] ')' block) | (IF_KEYWORD '(' expression[new UNode()] ')' block (ELSE_KEYWORD block)?))
+statmentT2 returns [StatementNode sn]
+           : ((WHILE_KEYWORD '(' exp1=expression  ')' b1=block {sn = new WhileStatementNode();sn.addChild(exp1);sn.addChild(b1);})
+             | (IF_KEYWORD '(' exp2=expression ')' b2=block
+              {sn = new StatementNode(); IfStatementNode ifSt = new IfStatementNode();ifSt.addChild(exp2);ifSt.addChild(b2);sn.addChild(ifSt);}
+              (ELSE_KEYWORD b3=block {ElseStatementNode elseSt = new ElseStatementNode();elseSt.addChild(b3);sn.addChild(elseSt);})?))
            ;
 
 //expression: ((literal expressionHelper) | (varReference expressionHelper) | ('(' expression ')' expressionHelper) | (functionCall expressionHelper))
@@ -110,56 +99,157 @@ statmentT2[UNode st2] : ((WHILE_KEYWORD '(' expression[new UNode()] ')' block) |
 
 //expressionHelper : (OPERATOR expression expressionHelper)?
 //           ;
-
-// operators
 /*
-operation       : (expressionEqual | expressionLess | expressionAdd | expressionSub | expressionMult)
+expression      returns [ExpressionNode eNode]
+                : expression2 expression02
                 ;
-expressionAdd   : OPERATOR_ADD expression
+expression02    returns [ExpressionNode eNode]
+                : ((expressionAdd expression) | (expressionMult expression))?
                 ;
-expressionSub   : OPERATOR_SUB expression
+expression2     returns [ExpressionNode eNode]
+                : ((expression2 expressionMult) | (expressionEnd))
                 ;
-expressionMult  : OPERATOR_MULT expression
+
+expressionEnd   returns [ExpressionNode eNode]
+                : atom
                 ;
-expressionLess  : OPERATOR_LESS expression
+// operators
+expressionAdd   : OPERATOR_ADD expression2
                 ;
-expressionEqual : OPERATOR_EQAUL expression
+expressionSub   : OPERATOR_SUB INTEGERCONST
+                ;
+expressionMult  : OPERATOR_MULT expressionEnd
+                ;
+expressionLess  : OPERATOR_LESS INTEGERCONST
+                ;
+expressionEqual : OPERATOR_EQAUL INTEGERCONST
                 ;
 */
-
-expression[UNode exp]      : expressionMult (expressionSub | expressionAdd | expressionLess | expressionEqual)?
+/*
+expression   [boolean skipExp] returns [ExpressionNode eNode]
+                @init {
+                  eNode = new ExpressionNode();
+                }
+                :((({!skipExp}?=> expression[true]) | atom) (eMult=expressionMult | eSub=expressionSub | eAdd=expressionAdd | eLess=expressionLess | eEqual=expressionEqual)?)
+                {eNode.addChild(eMult);eNode.addChild(eSub);eNode.addChild(eAdd);eNode.addChild(eLess);eNode.addChild(eEqual);}
                 ;
-expressionAdd   : OPERATOR_ADD expression[new UNode()]
+*/
+expression      returns [ExpressionNode eNode]
+                @init {
+                  eNode = new ExpressionNode();
+                }
+                : expFirst=expression0 {eNode.addChild(expFirst);} work[eNode]
                 ;
-expressionSub   : OPERATOR_SUB expression[new UNode()]
-                ;
-expressionMult  : atom (OPERATOR_MULT atom)*
-                ;
-expressionLess  : OPERATOR_LESS expression[new UNode()]
-                ;
-expressionEqual : OPERATOR_EQAUL expression[new UNode()]
-                ;
-
-expressionList  : expression[new UNode()] (',' expression[new UNode()])*
-                ;
-
-atom            : (varReference | functionCall | literal | bracketExpression)
-                ;
-
-varReference    : ID | (ID '[' expression[new UNode()] ']')
+work            [ExpressionNode eNode]
+                : ((eEq=expressionEqual {eNode.addChild(eEq);}) (work[eNode])?)?
                 ;
 
-bracketExpression : '('expression[new UNode()]')'
-                  ;
-
-functionCall    : ID '(' expressionList? ')'
+expression0     returns [ExpressionNode eNode]
+                @init {
+                  eNode = new ExpressionNode();
+                }
+                : expFirst=expression1 {eNode.addChild(expFirst);} work0[eNode]
                 ;
-// TODO pass real node
-block           : '{' (statmentT1[new UNode()] | statmentT2[new UNode()] )* '}'
+work0           [ExpressionNode eNode]
+                : ((eLess=expressionLess {eNode.addChild(eLess);}) (work0[eNode])?)?
+                ;
+
+expression1     returns [ExpressionNode eNode]
+                @init {
+                  eNode = new ExpressionNode();
+                }
+                : expFirst=expression2 {eNode.addChild(expFirst);} work1[eNode]
+                ;
+work1           [ExpressionNode eNode]
+                : ((opSub=expressionSub | opAdd=expressionAdd) {eNode.addChild(opSub);eNode.addChild(opAdd);} (work1[eNode])?)?
+                ;
+/*expression00      returns [ExpressionNode eNode]
+                @init {
+                  eNode = new ExpressionNode();
+                }
+                : ((eMult=expressionMult |eSub=expressionSub | eAdd=expressionAdd | eLess=expressionLess | eEqual=expressionEqual)? a1=expression)?
+                ;
+*/
+expression2     returns [ExpressionNode eNode]
+                @init {
+                  eNode = new ExpressionNode();
+                }
+                : expFirst=expressionEnd {eNode.addChild(expFirst);} work2[eNode]
+                ;
+
+work2           [ExpressionNode eNode]
+                : ((opMult=expressionMult) {eNode.addChild(opMult);} (work2[eNode])?)?
+                ;
+
+expressionEnd   returns [ExpressionNode eNode]
+                @init {
+                  eNode = new ExpressionNode();
+                }
+                : (at=atom | ('(' exp=expression ')')) {eNode.addChild(at);eNode.addChild(exp);}
+                ;
+
+
+expressionAdd   returns [OperationAddNode oAdd]
+                : {oAdd = new OperationAddNode();} OPERATOR_ADD a2=expression2 {oAdd.addChild(a2);}
+                ;
+expressionSub   returns [OperationSubNode oSub]
+                : {oSub = new OperationSubNode();} OPERATOR_SUB a2=expression2 {oSub.addChild(a2);}
+                ;
+expressionMult  returns [OperationMultNode oMult]
+                : {oMult = new OperationMultNode();} OPERATOR_MULT anext=expressionEnd {oMult.addChild(anext);}
+                ;
+expressionLess  returns [OperationLessNode oLess]
+                : {oLess = new OperationLessNode();} OPERATOR_LESS a2=expression1 {oLess.addChild(a2);}
+                ;
+expressionEqual returns [OperationEqualNode oEqual]
+                : {oEqual = new OperationEqualNode();} OPERATOR_EQAUL a2=expression0 {oEqual.addChild(a2);}
+                ;
+
+expressionList  returns [FunctionCallArgumentsNode fArgs]
+                @init{
+                  fArgs = new FunctionCallArgumentsNode();
+                }
+                : firstExp=expression {fArgs.addChild(firstExp);} (',' expNext=expression {fArgs.addChild(expNext);})*
+                ;
+
+atom            returns [AtomNode aNode]
+                : ((vRef=varReference {aNode = vRef;})| func=functionCall {aNode=func;} | (literal {aNode = new AtomLiteralNode($literal.text);}))
+                ;
+
+varReference    returns [AtomVariableReferenceNode vrn]
+                @init {
+                  vrn = new AtomVariableReferenceNode();
+                  IdentifierNode ident = new IdentifierNode();
+                }
+                : ((id1=ID {ident.setText($id1.text);}) | (id2=ID '[' exp=expression ']' {ident.setText($id2.text);}))
+                {vrn.addChild(ident);vrn.addChild(exp);}
+                ;
+
+functionCall    returns [AtomFunctionCallNode funcNode]
+                @init {
+                  funcNode = new AtomFunctionCallNode();
+                }
+                : ID '(' expList=expressionList? ')'
+                { funcNode.addChild(new IdentifierNode($ID.text));
+                  if(expList != null){
+                    funcNode.addChild(expList);
+                  }
+                  else{
+                    funcNode.addChild(new FunctionCallArgumentsNode());
+                  }
+                }
+                ;
+
+block           returns [BlockNode bn]
+                @init{
+                  bn = new BlockNode();
+                }
+                : '{' ((st1=statmentT1 {bn.addChild(st1);}) | (st2=statmentT2 {bn.addChild(st2);}) )* '}'
                 ;
 
 literal         : INTEGERCONST | STRING_CONST | FLOAT_CONST | CHAR_CONST | TRUE_CONST | FALSE_CONST
                 ;
+
 /* Lexer */
 
 PRINT_KEYWORD : ('print' | 'println')

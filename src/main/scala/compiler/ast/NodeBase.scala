@@ -1,6 +1,7 @@
 package compiler.ast
 
 import scala.collection.Traversable
+import java.lang.IndexOutOfBoundsException
 
 abstract class NodeBase(parserText: String) extends Traversable[NodeBase]{
 
@@ -8,26 +9,37 @@ abstract class NodeBase(parserText: String) extends Traversable[NodeBase]{
     this("")
   }
 
-  def addChild(child: NodeBase){
-    children = _lazyListAllocation(children, child)
-    child.setParent(this)
+  def getText: String = {
+    _getTextBracket(nodeText)
   }
 
-  def getText: String = {
-    parent match {
-      case Some(p)  => p.getChildTextPrefix() + _getTextBracket(nodeText) + p.getChildTextSufix()
-      case None     => _getTextBracket(nodeText)
+  def getParent(): Option[NodeBase] = {
+    parent
+  }
+
+  def getChild(index: Int): NodeBase = {
+    children match {
+      case Some(l) => l(index)
+      case None    => throw new IndexOutOfBoundsException(s"$index is out of bounds")
     }
   }
 
-  //return the string with which all children should be prefixed
-  def getChildTextPrefix(): String = {""}
-
-  //return the string with which all children should be sufixed
-  def getChildTextSufix(): String = {""}
-
   def setText(text: String) = {
     nodeText = text
+  }
+
+  def addChild(child: NodeBase){
+    if(child != null){
+      children = _lazyListAllocation(children, child)
+      child.setParent(this)
+    }
+  }
+
+  def removeChild(child: NodeBase){
+    children match {
+      case Some(cl) => children = Option(cl.filter((c) => c != child))
+      case None => //nop
+    }
   }
 
   def setParent(newParent: NodeBase){
@@ -41,9 +53,11 @@ abstract class NodeBase(parserText: String) extends Traversable[NodeBase]{
     }
   }
 
-  //does node have nice text output (returned from getText)
-  def isNiceText(): Boolean = {
-    false
+  override def size: Int = {
+    children match{
+      case Some(l) => l.size
+      case None    => 0
+    }
   }
 
   //iterate over child nodes
@@ -54,22 +68,14 @@ abstract class NodeBase(parserText: String) extends Traversable[NodeBase]{
     }
   }
 
-  protected def _getTextBracket(text: String): String = {
-    s"<${text}>"
+  private def _getTextBracket(text: String): String = {
+    s"${text}"
   }
 
   protected def _lazyListAllocation(list: Option[List[NodeBase]], childToAdd: NodeBase): Option[List[NodeBase]] = {
     list match {
       case Some(l) => Some(l :+ childToAdd)
       case None    => Some(List(childToAdd))
-    }
-  }
-
-  //concat all text returned by every child's getText method in order
-  protected def _concatChildText(): String = {
-    children match {
-      case Some(l)   => l.map((x) => x.getText).reduceLeft((acc,x) => acc + x)
-      case None      => ""
     }
   }
 
