@@ -61,7 +61,7 @@ class TreePrinter(treeRoot: NodeBase, outStream: PrintStream = System.out) {
         out.print(s"${getChildPrefix(n.getParent())}")
         DFS(n.getChild(0))
         if(n.size > 1){
-          out.print("= ")
+          out.print("\b=")
           DFS(n.getChild(1))
         }
         out.print(s"\b;${getChildSufix(n.getParent())}")
@@ -73,7 +73,7 @@ class TreePrinter(treeRoot: NodeBase, outStream: PrintStream = System.out) {
       }
       case n: OperationNode =>{
         n.foreach((c) => {
-          out.print(s"${n.getOperator()} ")
+          out.print(s"\b${n.getOperator()}")
           DFS(c)
         })
       }
@@ -116,7 +116,7 @@ class TreePrinter(treeRoot: NodeBase, outStream: PrintStream = System.out) {
       case n: ConditionalStatementNode => {
         out.print(s"${getChildPrefix(n.getParent())}${n.getKeyword()}")
         if(n.size == 2){
-          out.print("(")
+          out.print(" (")
           DFS(n.getChild(0))
           out.print(s"\b) ${getChildSufix(n.getParent())}")
           DFS(n.getChild(1))
