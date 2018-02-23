@@ -1,3 +1,13 @@
 void main(){
+  int bob;
+  int[32] frank;
   function123(bob, frank[4235], 4 + 4, bird(42, true));
+}
+
+void function123(string s, int[32] frank, int x, int y){
+
+}
+
+int bird(int x, boolean y){
+  return 24;
 }

@@ -3,6 +3,7 @@ grammar ulNoActions;
 @header {
   package org.antlr.runtime;
   import  compiler.ast.nodes.*;
+  import  compiler.ast.ASTType;
   import  compiler.ast.NodeBase;
 }
 
@@ -55,14 +56,14 @@ functionDecl returns [FunctionDeclarationNode fdn]
               fdn = new FunctionDeclarationNode();
               FormalParamsNode fParam = new FormalParamsNode();
             }
-            : cType = compoundType id=ID {fdn.addChild(cType);fdn.addChild(new UNode($id.text));} '(' (formalParams[fParam])? ')'  {fdn.addChild(fParam);}
+            : cType = compoundType id=ID {fdn.addChild(cType);fdn.addChild(new IdentifierNode($id.text));} '(' (formalParams[fParam])? ')'  {fdn.addChild(fParam);}
             ;
 
 formalParams[FormalParamsNode topFp] returns [FormalParamsNode fpn]
               @init{
                   fpn = topFp;
               }
-              : cType=compoundType ID {FunctionArgNode fArg = new FunctionArgNode(); fArg.addChild(cType); fArg.addChild(new UNode($ID.text));fpn.addChild(fArg);} (',' formalParams[fpn])?
+              : cType=compoundType ID {FunctionArgNode fArg = new FunctionArgNode(); fArg.addChild(cType); fArg.addChild(new IdentifierNode($ID.text));fpn.addChild(fArg);} (',' formalParams[fpn])?
               ;
 
 functionBody returns [FunctionBodyNode fbn]
@@ -73,11 +74,12 @@ functionBody returns [FunctionBodyNode fbn]
               ;
 
 variableDec returns [VariableDeclarationNode varDec]
-            : cType=compoundType ID ';' {varDec = new VariableDeclarationNode(); varDec.addChild(cType); varDec.addChild(new UNode($ID.text));}
+            : cType=compoundType ID ';' {varDec = new VariableDeclarationNode(); varDec.addChild(cType); varDec.addChild(new IdentifierNode($ID.text));}
             ;
 
-compoundType returns [UNode typ]
-              : (TYPE {typ = new UNode($TYPE.text);}) | (TYPE '[' INTEGERCONST ']' {typ = new UNode($TYPE.text + '[' + $INTEGERCONST.text + "]");})
+compoundType returns [CompTypeNode typ]
+              : (TYPE {typ = new CompTypeNode($TYPE.text);typ.setType(ASTType.javaCompat($TYPE.text));})
+              | (TYPE '[' INTEGERCONST ']' {typ = new CompTypeNode($TYPE.text); typ.setType(ASTType.javaCompat("A" + $TYPE.text));})
               ;
 
 statmentT1 returns [StatementNode sn]
@@ -167,7 +169,7 @@ expressionList  returns [FunctionCallArgumentsNode fArgs]
                 ;
 
 atom            returns [AtomNode aNode]
-                : ((vRef=varReference {aNode = vRef;})| func=functionCall {aNode=func;} | (literal {aNode = new AtomLiteralNode($literal.text);}))
+                : ((vRef=varReference {aNode = vRef;})| func=functionCall {aNode=func;} | (lit=literal {aNode = lit;}))
                 ;
 
 varReference    returns [AtomVariableReferenceNode vrn]
@@ -175,8 +177,9 @@ varReference    returns [AtomVariableReferenceNode vrn]
                   vrn = new AtomVariableReferenceNode();
                   IdentifierNode ident = new IdentifierNode();
                 }
-                : ((id1=ID {ident.setText($id1.text);}) | (id2=ID '[' exp=expression ']' {ident.setText($id2.text);}))
-                {vrn.addChild(ident);vrn.addChild(exp);}
+                : ((id1=ID {ident.setText($id1.text);ident.setLineNumber($id1.getLine());})
+                | (id2=ID '[' exp=expression ']' {ident.setText($id2.text);ident.setLineNumber($id2.getLine());vrn.setDereference();}))
+                {vrn.addChild(ident);vrn.addChild(exp);vrn.setLineNumber(ident.getLineNumber());}
                 ;
 
 functionCall    returns [AtomFunctionCallNode funcNode]
@@ -185,6 +188,7 @@ functionCall    returns [AtomFunctionCallNode funcNode]
                 }
                 : ID '(' expList=expressionList? ')'
                 { funcNode.addChild(new IdentifierNode($ID.text));
+                  funcNode.setLineNumber($ID.getLine());
                   if(expList != null){
                     funcNode.addChild(expList);
                   }
@@ -201,7 +205,13 @@ block           returns [BlockNode bn]
                 : '{' ((st1=statmentT1 {bn.addChild(st1);}) | (st2=statmentT2 {bn.addChild(st2);}) )* '}'
                 ;
 
-literal         : INTEGERCONST | STRING_CONST | FLOAT_CONST | CHAR_CONST | TRUE_CONST | FALSE_CONST
+literal         returns [AtomLiteralNode aln]
+                : ((INTEGERCONST {aln = new AtomLiteralNode($INTEGERCONST.text); aln.setLineNumber($INTEGERCONST.getLine()); aln.setType(ASTType.javaCompat("Int"));})
+                  | (STRING_CONST {aln = new AtomLiteralNode($STRING_CONST.text); aln.setLineNumber($STRING_CONST.getLine()); aln.setType(ASTType.javaCompat("String"));})
+                  | (FLOAT_CONST {aln = new AtomLiteralNode($FLOAT_CONST.text); aln.setLineNumber($FLOAT_CONST.getLine()); aln.setType(ASTType.javaCompat("Float"));})
+                  | (CHAR_CONST {aln = new AtomLiteralNode($CHAR_CONST.text); aln.setLineNumber($CHAR_CONST.getLine()); aln.setType(ASTType.javaCompat("Char"));})
+                  | (TRUE_CONST {aln = new AtomLiteralNode($TRUE_CONST.text); aln.setLineNumber($TRUE_CONST.getLine()); aln.setType(ASTType.javaCompat("Bool"));})
+                  | (FALSE_CONST {aln = new AtomLiteralNode($FALSE_CONST.text); aln.setLineNumber($FALSE_CONST.getLine()); aln.setType(ASTType.javaCompat("Bool"));}))
                 ;
 
 /* Lexer */

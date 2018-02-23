@@ -1,6 +1,11 @@
-void main (int x, float y) {
-	string s;
+void main (int z, float y) {
+	int s;
 	int x;
-
+  x = foo() + 2;
 	x = s + x;
+}
+
+
+int foo(){
+  return 5;
 }

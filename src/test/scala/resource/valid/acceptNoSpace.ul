@@ -1,6 +1,9 @@
 void main(){
   int[32] bob;
-  int[53]bob;
   bob;
   func(bob[34]);
+}
+
+void func(int[34] arr){
+
 }

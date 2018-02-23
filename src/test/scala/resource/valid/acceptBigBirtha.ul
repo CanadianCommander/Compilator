@@ -13,7 +13,7 @@ boolean main(int[100] numbers){
   ;
   while(count < cMax){
     count = count - 1;
-    println count + "bottles of beer on the wall " + count + "bottles of beer! take one down pass it around " + (count - 1) + "bottles of beer on the wall";
+    println "bottles of beer on the wall " + "bottles of beer! take one down pass it around " +  "bottles of beer on the wall";
   }
   add(1,1);
   return function(true,false);
@@ -24,4 +24,8 @@ int add(int a, int b){
   isTrue = 1 + 1 < 2;
   isTrue = 2*2 + 3 + 4*4*3 + 8;
   return a + b;
+}
+
+boolean function(boolean x, boolean y){
+  return true;
 }

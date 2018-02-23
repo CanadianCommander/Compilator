@@ -13,6 +13,27 @@ abstract class NodeBase(parserText: String) extends Traversable[NodeBase]{
     _getTextBracket(nodeText)
   }
 
+  def getLineNumber(): Int = {
+    if(lineNum == -1){
+      val res = find((child) => child.getLineNumber() != -1)
+      res match{
+        case Some(n) => {
+          n.getLineNumber()
+        }
+        case None => {
+          -1
+        }
+      }
+    }
+    else{
+      lineNum
+    }
+  }
+
+  def getType(): ASTType.Type =  {
+    myType
+  }
+
   def getParent(): Option[NodeBase] = {
     parent
   }
@@ -26,6 +47,14 @@ abstract class NodeBase(parserText: String) extends Traversable[NodeBase]{
 
   def setText(text: String) = {
     nodeText = text
+  }
+
+  def setLineNumber(lNum: Int) = {
+    lineNum = lNum
+  }
+
+  def setType(t: ASTType.Type) = {
+    myType = t;
   }
 
   def addChild(child: NodeBase){
@@ -82,4 +111,6 @@ abstract class NodeBase(parserText: String) extends Traversable[NodeBase]{
   protected var nodeText : String = parserText
   protected var parent   : Option[NodeBase] = None
   protected var children : Option[List[NodeBase]] = None
+  protected var myType   : ASTType.Type = ASTType.BAD
+  protected var lineNum  : Int = -1;
 }
