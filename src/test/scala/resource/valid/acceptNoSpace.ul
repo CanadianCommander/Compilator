@@ -1,7 +1,7 @@
 void main(){
-  int[32] bob;
+  int[34] bob;
   bob;
-  func(bob[34]);
+  func(bob);
 }
 
 void func(int[34] arr){

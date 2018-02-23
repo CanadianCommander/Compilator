@@ -18,4 +18,18 @@ class AtomFunctionCallNode(parserText : String) extends AtomNode(parserText) {
       case None => throw new Exception("Malformed AST, Function call has no identifier!")
     }
   }
+
+  def getArgList(): List[ExpressionNode] = {
+    val argsNode = find ((c) => {
+      c match{
+        case c: FunctionCallArgumentsNode => true
+        case _ => false
+      }
+    })
+
+    argsNode match{
+      case Some(args) => args.toList.asInstanceOf[List[ExpressionNode]]
+      case None => List()
+    }
+  }
 }

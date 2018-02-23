@@ -19,6 +19,8 @@ class DefaultTypeCheckerFactory extends SimpleFactory[ulNoActionsParser, Boolean
 
       logMsg("refactoring AST", Level.INFO)
       cleanAST(root)
+
+      logMsg("Type Checking AST", Level.INFO)
       typeCheck(root)
     }
     catch{
@@ -136,11 +138,39 @@ class DefaultTypeCheckerFactory extends SimpleFactory[ulNoActionsParser, Boolean
       case n: AtomFunctionCallNode =>{
         val funcData = fEnv get n.getName()
         funcData match {
-          case Some(ft) => ft._1 // function type
+          case Some(ft) => {
+            //check that args are correct
+            val fArgs = n.getArgList()
+            val fParams = ft._2.getParameterNode()
+
+            fParams match{
+              case Some(fp) => {
+                if(fp.size == fArgs.size){
+                  fp.toList.zip(fArgs).foreach((argParam) => {
+                    argParam match{
+                      case (p, a) => {
+                        if(typeCheckDFS(a,vEnv,fEnv) != p.getType()){
+                          throw new TypeCheckException(s"Function: ${n.getName()} expected ${ASTType.typeToString(p.getType())} got ${ASTType.typeToString(typeCheckDFS(a,vEnv,fEnv))}", n.getLineNumber())
+                        }
+                      }
+                    }
+                  })
+                }
+                else{
+                  throw new TypeCheckException(s"Function: ${n.getName()} takes ${fp.size} arguments, ${fArgs.size} given",n.getLineNumber())
+                }
+              }
+              case None => {
+                if(fArgs.size > 0){
+                  throw new TypeCheckException(s"Function: ${n.getName()} takes 0 arguments, ${fArgs.size} given", n.getLineNumber())
+                }
+              }
+            }
+
+            ft._1 // function type
+          }
           case None => throw new TypeCheckException(s"Function: ${n.getName()} not declared!", n.getLineNumber())
         }
-
-
       }
       case n: NodeBase => {
         var out = n.getType()
