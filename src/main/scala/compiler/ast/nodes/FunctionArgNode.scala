@@ -34,4 +34,17 @@ class FunctionArgNode(parserText : String) extends NodeBase(parserText) {
       case None => throw new Exception("Malformed AST! Function arg does not have type!")
     }
   }
+
+  def getTypeNode(): CompTypeNode = {
+    val cType = find ((c) => {
+      c match{
+        case c: CompTypeNode => true
+        case _ => false
+      }
+    })
+    cType match{
+      case Some(ct) => ct.asInstanceOf[CompTypeNode]
+      case None => throw new Exception("Malformed AST! Function arg does not have type!")
+    }
+  }
 }

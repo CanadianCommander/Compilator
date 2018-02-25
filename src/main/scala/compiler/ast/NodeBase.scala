@@ -34,6 +34,20 @@ abstract class NodeBase(parserText: String) extends Traversable[NodeBase]{
     myType
   }
 
+  def getLen(): Int = {
+    val child = find((c) =>{
+      if(c.getLen() != 0){
+        true
+      }
+      false
+    })
+
+    child match{
+      case Some(child) => child.getLen()
+      case None => 0
+    }
+  }
+
   def getParent(): Option[NodeBase] = {
     parent
   }

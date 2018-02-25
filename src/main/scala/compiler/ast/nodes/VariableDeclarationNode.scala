@@ -37,4 +37,18 @@ class VariableDeclarationNode(parserText : String) extends NodeBase(parserText) 
       case None => throw new Exception ("Varialbe Declaration has not CompTypeNode!")
     }
   }
+
+  def getTypeNode(): CompTypeNode = {
+    val myTypeNode = find ((c) => {
+      c match{
+        case c: CompTypeNode => true
+        case _ => false
+      }
+    })
+
+    myTypeNode match{
+      case Some(mtn) => mtn.asInstanceOf[CompTypeNode]
+      case None => throw new Exception ("Varialbe Declaration has not CompTypeNode!")
+    }
+  }
 }

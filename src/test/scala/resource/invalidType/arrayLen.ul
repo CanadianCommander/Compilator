@@ -1,0 +1,6 @@
+void main(){
+  int[32] xy;
+  int[466] b;
+
+  xy = b;
+}

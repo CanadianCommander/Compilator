@@ -70,13 +70,31 @@ object ASTType extends Enumeration {
     }
   }
 
+  def typeToString(t: List[Type]): String ={
+    var sOut = ""
+    t.foreach((typ) => {
+      sOut += typeToString(typ)
+    })
+    sOut 
+  }
+
   def isArrayType(t: Type): Boolean = {
     arrayTypes contains t
   }
 
-  //Int, Float, Char, String, Bool, Void
+  //Int, Float, Char, String, Bool, Void, Array Int, Array Float, Array Char, Array String, Array Bool, bad value
   val I, F, C, S, B, V, AI, AF, AC, AS, AB, BAD= Value
-  val validPrintTypes = List(I,F,C,S,B)
   val arrayTypes = List(AI,AF,AC,AS,AB)
   val drefMap    = Map(AI -> I, AF -> F, AC -> C, AS -> S, AB -> B)
+
+  //statments
+  val validPrintTypes = List(I,F,C,S,B)
+
+  //operators
+  val validAddTypes = List(I,F,C,S)
+  val validSubTypes = List(I,F,C)
+  val validMultTypes = List(I,F)
+  val validLessTypes = List(I,F,C,S,B)
+  val validEqualTypes = List(I,F,C,S,B)
+
 }

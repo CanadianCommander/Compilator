@@ -1,9 +1,9 @@
-void main () {
+int[5] main () {
 	int[5] a;
 	int    b;
 
 	b = 73;
-	
+
 	a[0] = 1;
 	a[1] = 2;
 
@@ -12,8 +12,7 @@ void main () {
 	return a;
 }
 
-int bar ( int[5] f ) {
+bool bar ( int[5] f ) {
 
 	return f[3] < f[1];
 }
-

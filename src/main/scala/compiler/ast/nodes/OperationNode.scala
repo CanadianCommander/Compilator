@@ -9,9 +9,5 @@ abstract class OperationNode(parserText : String) extends NodeBase(parserText) {
     this("")
   }
 
-  def getValidTypeFilter(): (ASTType.Type) => Boolean = {
-    (t: ASTType.Type) => true
-  }
-
   def getOperator(): String
 }

@@ -45,4 +45,18 @@ class FunctionDeclarationNode(parserText : String) extends NodeBase(parserText) 
       case None => throw new Exception ("Malformed AST! function declaration has no id!")
     }
   }
+
+  override def getLen(): Int = {
+    val cType = find ((c) => {
+      c match{
+        case c: CompTypeNode => true
+        case _ => false
+      }
+    })
+
+    cType match {
+      case Some(c) => c.getLen()
+      case None => 0
+    }
+  }
 }

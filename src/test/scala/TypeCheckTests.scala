@@ -27,7 +27,7 @@ class TypeCheckTests extends FlatSpec {
   "invalid .ul files " should "fail to type check " in {
     val compManager = setup()
 
-    var ulFiles = getULFilesInDir("src/test/scala/resource/invalid/")
+    var ulFiles = getULFilesInDir("src/test/scala/resource/invalidType/")
     ulFiles.foreach( (ulFile) => {
       println(s"running type check on: $ulFile")
       assert(!compManager.compile(ulFile))

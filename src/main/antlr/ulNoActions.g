@@ -63,7 +63,7 @@ formalParams[FormalParamsNode topFp] returns [FormalParamsNode fpn]
               @init{
                   fpn = topFp;
               }
-              : cType=compoundType ID {FunctionArgNode fArg = new FunctionArgNode(); fArg.addChild(cType); fArg.addChild(new IdentifierNode($ID.text));fpn.addChild(fArg);} (',' formalParams[fpn])?
+              : cType=compoundType ID {FunctionArgNode fArg = new FunctionArgNode(); fArg.addChild(cType);fArg.setLineNumber($ID.getLine()); fArg.addChild(new IdentifierNode($ID.text));fpn.addChild(fArg);} (',' formalParams[fpn])?
               ;
 
 functionBody returns [FunctionBodyNode fbn]
@@ -74,12 +74,12 @@ functionBody returns [FunctionBodyNode fbn]
               ;
 
 variableDec returns [VariableDeclarationNode varDec]
-            : cType=compoundType ID ';' {varDec = new VariableDeclarationNode(); varDec.addChild(cType); varDec.addChild(new IdentifierNode($ID.text));}
+            : cType=compoundType ID ';' {varDec = new VariableDeclarationNode(); varDec.addChild(cType); varDec.setLineNumber($ID.getLine()); varDec.addChild(new IdentifierNode($ID.text));}
             ;
 
 compoundType returns [CompTypeNode typ]
               : (TYPE {typ = new CompTypeNode($TYPE.text);typ.setType(ASTType.javaCompat($TYPE.text));})
-              | (TYPE '[' INTEGERCONST ']' {typ = new CompTypeNode($TYPE.text); typ.setType(ASTType.javaCompat("A" + $TYPE.text));})
+              | (TYPE '[' INTEGERCONST ']' {typ = new CompTypeNode($TYPE.text); typ.setType(ASTType.javaCompat("A" + $TYPE.text));typ.setLenS($INTEGERCONST.text);})
               ;
 
 statmentT1 returns [StatementNode sn]
