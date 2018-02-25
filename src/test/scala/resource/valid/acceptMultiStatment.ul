@@ -1,4 +1,8 @@
-int main (string name, int age){
+void main(){
+
+}
+
+int foo (string name, int age){
   println name;
   age = age * 2;
   return age;

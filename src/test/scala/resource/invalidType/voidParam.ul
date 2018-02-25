@@ -1,3 +1,6 @@
-void main(void p){
+void main(){
+
+}
+void foo(void p){
 
 }

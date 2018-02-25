@@ -1,3 +1,7 @@
-int[42] main(int[43] xxxx){
+void main(){
+
+}
+
+int[42] foo(int[43] xxxx){
   return xxxx;
 }

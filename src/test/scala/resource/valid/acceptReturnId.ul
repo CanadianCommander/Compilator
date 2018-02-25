@@ -1,3 +1,6 @@
-int main(int billyBobTheSecond){
+void main(){
+
+}
+int foo(int billyBobTheSecond){
   return billyBobTheSecond;
 }

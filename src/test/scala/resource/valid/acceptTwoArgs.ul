@@ -1,3 +1,7 @@
-void main(string[2] args, char c){
+void main(){
+
+}
+
+void foo(string[2] args, char c){
 
 }

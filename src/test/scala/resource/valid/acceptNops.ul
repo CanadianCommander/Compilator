@@ -1,4 +1,8 @@
-string main(string[42] args){
+void main(){
+
+}
+
+string foo(string[42] args){
   2+2;// nop
   //foo() + bar() * 2; //nop
   return "foobar";

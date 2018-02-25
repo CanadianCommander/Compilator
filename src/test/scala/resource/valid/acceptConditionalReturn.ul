@@ -1,4 +1,8 @@
-int main(int pay){
+void main(){
+
+}
+
+int foo(int pay){
   if(pay < 10){
     return pay*10;
   }

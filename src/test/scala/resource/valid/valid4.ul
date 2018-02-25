@@ -1,4 +1,8 @@
-int[5] main () {
+void main(){
+
+}
+
+int[5] foo () {
 	int[5] a;
 	int    b;
 

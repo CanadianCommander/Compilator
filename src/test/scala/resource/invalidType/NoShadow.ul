@@ -1,3 +1,7 @@
-void main(int a){
+void main(){
+
+}
+
+void foo(int a){
   int a;
 }

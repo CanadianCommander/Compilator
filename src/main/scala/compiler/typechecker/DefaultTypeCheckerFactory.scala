@@ -199,6 +199,26 @@ class DefaultTypeCheckerFactory extends SimpleFactory[ulNoActionsParser, Boolean
         ASTType.S
       }
       case n: AtomVariableReferenceNode => {
+
+        //ensure proper indexing
+        if(n.isDereference()){
+          val dExp = n.find((c) => {
+            c match{
+              case c: ExpressionNode => true
+              case _ => false
+            }
+          })
+
+          dExp match{
+            case Some(de) => {
+              if(typeCheckDFS(de,vEnv,fEnv) != ASTType.I){
+                throw new TypeCheckException("Arrays can only be indexed with integers ", n.getLineNumber())
+              }
+            }
+            case None =>{}
+          }
+        }
+
         dereferenceVar(n,vEnv)
       }
       case n: AtomFunctionCallNode =>{
@@ -282,6 +302,26 @@ class DefaultTypeCheckerFactory extends SimpleFactory[ulNoActionsParser, Boolean
       function match{
         case f: FunctionNode => {
           val fDec = f.getFunctionDeclaration()
+          if(fDec.getName() == "main"){
+            if(fDec.getType() != ASTType.V){
+              throw new TypeCheckException("main method must return void", root.getLineNumber())
+            }
+            val fParam = fDec.getParameterNode()
+            fParam match{
+              case Some(fp) => {
+                if(fp.size > 0){
+                  throw new TypeCheckException("main method must take zero arguments", root.getLineNumber())
+                }
+              }
+              case None => {
+                //nop
+              }
+            }
+          }
+
+          if(functionEnv contains fDec.getName()){
+            throw new TypeCheckException(s"${fDec.getName()} rediclared!", root.getLineNumber())
+          }
           functionEnv = functionEnv + (fDec.getName() -> (fDec.getType(), fDec))
         }
         case _ => {

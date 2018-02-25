@@ -78,8 +78,8 @@ variableDec returns [VariableDeclarationNode varDec]
             ;
 
 compoundType returns [CompTypeNode typ]
-              : (TYPE {typ = new CompTypeNode($TYPE.text);typ.setType(ASTType.javaCompat($TYPE.text));})
-              | (TYPE '[' INTEGERCONST ']' {typ = new CompTypeNode($TYPE.text); typ.setType(ASTType.javaCompat("A" + $TYPE.text));typ.setLenS($INTEGERCONST.text);})
+              : (TYPE {typ = new CompTypeNode($TYPE.text);typ.setType(ASTType.javaCompat($TYPE.text));typ.setLineNumber($TYPE.getLine());})
+              | (TYPE '[' INTEGERCONST ']' {typ = new CompTypeNode($TYPE.text); typ.setType(ASTType.javaCompat("A" + $TYPE.text));typ.setLenS($INTEGERCONST.text);typ.setLineNumber($TYPE.getLine());})
               ;
 
 statmentT1 returns [StatementNode sn]

@@ -1,4 +1,5 @@
-boolean main(int[100] numbers){
+void main(){
+  int[100] numbers;
   string _bob123;
   int count;
   int cMax;
@@ -16,7 +17,7 @@ boolean main(int[100] numbers){
     println "bottles of beer on the wall " + "bottles of beer! take one down pass it around " +  "bottles of beer on the wall";
   }
   add(1,1);
-  return function(true,false);
+  function(true,false);
 }
 
 int add(int a, int b){
