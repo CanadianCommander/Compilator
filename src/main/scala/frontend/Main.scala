@@ -8,6 +8,7 @@ import compiler.parser.DefaultParserFactory
 import compiler.typechecker.DefaultTypeCheckerFactory
 import compiler.CompilationManager
 import frontend.ui.TreePrinter
+import compiler.ast.NodeBase
 
 object Main {
   def main(args: Array[String]) = {
@@ -16,10 +17,10 @@ object Main {
       println(s"usage:java -jar ./Compilator-all.jar <.ulfile> ")
     }
     else {
-      val compManager = (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Boolean]
+      val compManager = (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[NodeBase]]
                             (new DefaultLexerFactory(), new DefaultParserFactory(),new DefaultTypeCheckerFactory()))
       logMsg("-compilation started-", Level.INFO)
-      if(!compManager.compile(args(0))){
+      if(compManager.compile(args(0)).isEmpty){
         println("Compilation Failed")
         logMsg("Compilation Failed", Level.CERROR);
       }

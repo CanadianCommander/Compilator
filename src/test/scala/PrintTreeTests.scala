@@ -44,8 +44,8 @@ class PrintTreeTests extends FlatSpec {
     printBarNotification(s"${ulFiles.size} files testet for PrintTree")
   }
 
-  def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,TreePrinter] = {
-    return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,TreePrinter]
+  def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,TreePrinter,TreePrinter] = {
+    return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,TreePrinter,TreePrinter]
                                   (new DefaultLexerFactory(), new DefaultParserFactory(),
                                    new TreePrinterTestFactory())
             )

@@ -11,8 +11,8 @@ import util.General._
 import frontend.ui.TreePrinter
 
 //TODO replace output string with parser object of some sort !!!
-class DefaultTypeCheckerFactory extends SimpleFactory[ulNoActionsParser, Boolean] {
-  override def create(parser: ulNoActionsParser): Boolean = {
+class DefaultTypeCheckerFactory extends SimpleFactory[ulNoActionsParser, Option[NodeBase]] {
+  override def create(parser: ulNoActionsParser): Option[NodeBase] = {
     try{
       logMsg("invoking antlr parser and lexer", Level.INFO)
       var root: NodeBase = parser.program()
@@ -21,12 +21,17 @@ class DefaultTypeCheckerFactory extends SimpleFactory[ulNoActionsParser, Boolean
       cleanAST(root)
 
       logMsg("Type Checking AST", Level.INFO)
-      typeCheck(root)
+      if(typeCheck(root)){
+        Some(root)
+      }
+      else {
+        None
+      }
     }
     catch{
       case e : RecognitionException => {
         logMsg(s"Parsing error: $e", Level.CERROR)
-        false
+        None
       }
     }
   }
