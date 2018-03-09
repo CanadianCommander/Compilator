@@ -1,6 +1,24 @@
 package compiler.ir
 
+import compiler.ir.nodes._
+
 class IRNodeBase extends Traversable[IRNodeBase]{
+
+  def setType(nTyp: IRType.Type) = {
+    resType = nTyp
+  }
+
+  def assignTemporary(tmp: IRTemporaryNode) = {
+    myTemporary = Some(tmp)
+  }
+
+  def getTemporary() : Option[IRTemporaryNode] = {
+    myTemporary
+  }
+
+  def getType(): IRType.Type ={
+    resType
+  }
 
   def getChild(index: Int): IRNodeBase = {
     children match {
@@ -21,6 +39,10 @@ class IRNodeBase extends Traversable[IRNodeBase]{
       children = _lazyListAllocation(children, child)
       child.setParent(this)
     }
+  }
+
+  def addChild(child: List[IRNodeBase]){
+    child.foreach((c) => addChild(c))
   }
 
   def removeChild(child: IRNodeBase){
@@ -56,6 +78,12 @@ class IRNodeBase extends Traversable[IRNodeBase]{
     }
   }
 
+  override def toString(): String = {
+    foldLeft("")((acc,c) => acc + c)
+  }
+
   protected var children : Option[List[IRNodeBase]] = None
   protected var parent   : Option[IRNodeBase] = None
+  protected var resType   : IRType.Type = IRType.BAD
+  protected var myTemporary: Option[IRTemporaryNode] = None
 }

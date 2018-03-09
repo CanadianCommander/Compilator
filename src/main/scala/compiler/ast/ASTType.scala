@@ -75,7 +75,7 @@ object ASTType extends Enumeration {
     t.foreach((typ) => {
       sOut += typeToString(typ)
     })
-    sOut 
+    sOut
   }
 
   def isArrayType(t: Type): Boolean = {
