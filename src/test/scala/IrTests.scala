@@ -26,8 +26,8 @@ class IRTests extends FlatSpec {
   }
 
 
-  def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[IRNodeBase]] = {
-    return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[IRNodeBase]]
+  def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[List[IRBuilder]]] = {
+    return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[List[IRBuilder]]]
                                   (new DefaultLexerFactory(), new DefaultParserFactory(),
                                    new DefaultTypeCheckerFactory(), new DefaultIRFactory())
             )

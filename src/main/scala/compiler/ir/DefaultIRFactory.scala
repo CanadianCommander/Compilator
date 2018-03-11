@@ -7,20 +7,23 @@ import compiler.ast.NodeBase
 import compiler.ast.nodes._
 import compiler.ir.nodes._
 
-class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[IRNodeBase]] {
+class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBuilder]]] {
 
-  override def create(root : Option[NodeBase]): Option[IRNodeBase] = {
+  override def create(root : Option[NodeBase]): Option[List[IRBuilder]] = {
     root match{
       case Some(root) => {
-        var irRoot = new IRNodeBase()
+        var irLst: List[IRBuilder] = List()
 
         var fEnv = getFunctionEnv(root)
 
         //note parallel execution
         try{
-          root.map((func) =>{
-            genIRDFS(func,Map[String,IRTemporaryNode](),fEnv, new IRNodeFactory())
-          }).toList.foreach((func) => irRoot.addChild(func))
+          root.par.map((func) =>{
+            val irBuilder = new IRBuilder()
+            irBuilder.setFunctionEnv(fEnv)
+            genIRDFS(func,irBuilder)
+            irBuilder
+          }).toList.foreach((func) => irLst = irLst :+ func)
         }
         catch{
           case e: Exception => {
@@ -29,9 +32,9 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[IRNodeBase
           }
         }
 
-        if(irRoot.size > 0){
-          print(irRoot)
-          Some(irRoot)
+        if(irLst.size > 0){
+          irLst.foreach((f) => print(f))
+          Some(irLst)
         }
         else{
           None
@@ -51,110 +54,142 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[IRNodeBase
     })
   }
 
-  private def genIRDFS(node: NodeBase,vEnv: Map[String,IRTemporaryNode], fEnv: Map[String,FunctionNode], irFac : IRNodeFactory): IRNodeBase ={
+  private def genIRDFS(node: NodeBase,irBuilder: IRBuilder): Option[IRTemporaryInstruction] ={
     node match{
       case n: FunctionNode => {
-        val functionRoot = irFac.create(n.getFunctionDeclaration())
 
         //build parameter temps
-        val paramTemps = genIRDFS(n.getFunctionDeclaration(), vEnv,fEnv,irFac)
+        genIRDFS(n.getFunctionDeclaration(), irBuilder)
 
         // local var temps
-        val tmpLst = n.getFunctionBody().filter((child) => {
+        n.getFunctionBody().filter((child) => {
           child match{
             case c: VariableDeclarationNode => true
             case _ => false
           }
-        }).map((vN) => genIRDFS(vN,vEnv,fEnv,irFac)).toList
-        val localTemps = new IRNodeBase()
-        localTemps.addChild(tmpLst)
+        }).map((vD) => irBuilder.newTemporary(IRType.fromASTType(vD.getType()), vD.asInstanceOf[VariableDeclarationNode].getName() )).toList
 
         // statments
-        var localEnv = appendTempToEnv(localTemps.toList, appendTempToEnv(paramTemps.toList,vEnv))
         val stmtLst = n.getFunctionBody().filter((child) => {
           child match{
             case c: VariableDeclarationNode => false
             case _=> true
           }
-        }).map((stmt) => genIRDFS(stmt,localEnv,fEnv,irFac)).toList
-
-        functionRoot.addChild(paramTemps)
-        functionRoot.addChild(localTemps)
-        functionRoot.addChild(stmtLst)
-        functionRoot
+        }).map((stmt) => genIRDFS(stmt,irBuilder)).toList
+        None
       }
       case n: FunctionDeclarationNode => {
-        val fParams = n.getParameterNode()
+        val pNode = n.getParameterNode()
+        var argLst: List[IRType.Type] = List()
 
-        fParams match{
-          case Some(fp) => {
-            var out = new IRNodeBase()
-            fp.foreach((arg) => {
-              out.addChild(irFac.create(arg))
+        pNode match{
+          case Some(pn) => {
+            pn.foreach((arg) => {
+              arg match {
+                case arg: FunctionArgNode => {
+                  argLst = argLst :+ IRType.fromASTType(arg.getType())
+                  irBuilder.newTemporary(IRType.fromASTType(arg.getType()), arg.getName())
+                }
+              }
             })
-            out
           }
-          case None => new IRNodeBase()
+          case None => {}
         }
+
+        irBuilder.setFunctionDeclaration(new IRFunctionInstruction(n.getName(),argLst,IRType.fromASTType(n.getType())))
+        None
       }
       case n: AssignStatementNode => {
-        var statementNode = irFac.create(n).asInstanceOf[IRStatementNode]
+        var exp: NodeBase = null
+        var tmpTarget: Option[IRTemporaryInstruction] = None
+        var tmpExp: Option[IRTemporaryInstruction] = None
 
         if(n.size == 2){
-          //assignment statement
-          statementNode.setTarget(genIRDFS(n.getChild(0),vEnv,fEnv,irFac))
-          statementNode.setExpression(genIRDFS(n.getChild(1),vEnv,fEnv,irFac))
+          tmpExp = genIRDFS(n.getChild(1),irBuilder)
+          tmpTarget = genIRDFS(n.getChild(0),irBuilder)
         }
         else {
-          //nop statement
-
+          tmpExp = genIRDFS(n.getChild(0),irBuilder)
+          tmpTarget = Some(irBuilder.newTemporary(tmpExp.get.getType()))
         }
 
-        statementNode
-      }
-      case n: AtomLiteralNode =>{
-        irFac.create(n)
-      }
-      case n: AtomNode => {
-        irFac.newTemporary(IRType.I)
+        val aStmt = new IRAssignInstruction(tmpTarget.get,new IRExpression(Some(IROperator.newNop()),tmpExp))
+        irBuilder.addInstruction(aStmt)
+        tmpTarget
       }
       case n: ExpressionNode => {
-        expressionToIR(n,vEnv,fEnv,irFac)
+        val tmpLst = n.map((c) => {
+          c match {
+            case c: OperationNode => {
+              genIRDFS(c.getChild(0), irBuilder).get
+            }
+            case _ => {
+              genIRDFS(c, irBuilder).get
+            }
+          }
+        }).toList
+
+        if(tmpLst.size > 1){
+          var temporary = irBuilder.newTemporary(getOperatorType(n.getChild(1).asInstanceOf[OperationNode],tmpLst(0).getType))
+          //val firstStmt = new IRAssignInstruction(temporary,new IRExpression())
+          Some(irBuilder.newTemporary(IRType.I))
+        }
+        else {
+          val temporary = irBuilder.newTemporary(tmpLst(0).getType())
+          val firstStmt = new IRAssignInstruction(temporary,new IRExpression(Some(IROperator.newNop()),Some(tmpLst(0))))
+          irBuilder.addInstruction(firstStmt)
+          Some(temporary)
+        }
       }
-      case n: NodeBase =>{
-        irFac.create(n)
+      case n: AtomLiteralNode =>{
+        val literal = getLiteralFromString(n.getText)
+        val temp = irBuilder.newTemporary(literal.getType())
+        val aliteral = new IRAssignLiteralInstruction(temp,literal)
+        irBuilder.addInstruction(aliteral)
+        Some(temp)
+      }
+      case n: AtomVariableReferenceNode => {
+        irBuilder.lookupTemporary(n.getName())
+      }
+      case n: AtomNode => {
+        Some(irBuilder.newTemporary(IRType.I))//TMPTMPTMTPTPTM
+      }
+      case n: NodeBase => {
+        None
       }
     }
   }
 
-  def appendTempToEnv(tmp: IRTemporaryNode, vEnv: Map[String,IRTemporaryNode]): Map[String,IRTemporaryNode] = {
-    vEnv + (tmp.getVarName() -> tmp)
+  private def getOperatorType(n: OperationNode, operandType: IRType.Type): IRType.Type = {
+    n match {
+      case n: OperationAddNode => operandType
+      case n: OperationSubNode => operandType
+      case n: OperationMultNode => operandType
+      case n: OperationEqualNode => IRType.Z
+      case n: OperationLessNode => IRType.Z
+    }
   }
 
-  def appendTempToEnv(tmpl: List[IRNodeBase], vEnv: Map[String,IRTemporaryNode]): Map[String,IRTemporaryNode] = {
-    tmpl.foldLeft(Map[String,IRTemporaryNode]())((acc,t) => appendTempToEnv(t.asInstanceOf[IRTemporaryNode],acc))
+  private def getLiteralType(str: String): IRType.Type = {
+    val floatR = raw"\d+\.\d+".r
+    val intR = raw"\d+".r
+    val boolR = raw"(true|false)".r
+
+    str match{
+      case floatR(_*) => IRType.F
+      case intR(_*) => IRType.I
+      case boolR(_*) => IRType.Z
+      case _ => IRType.U
+    }
   }
 
-  def expressionToIR(exp: ExpressionNode, vEnv: Map[String,IRTemporaryNode], fEnv: Map[String,FunctionNode], irFac : IRNodeFactory): IRNodeBase = {
-    exp.toList match {
-      case l :: op :: rest => {
-        val left = genIRDFS(l,vEnv,fEnv,irFac)
-        val right = genIRDFS(op.getChild(0),vEnv,fEnv,irFac)
-        val operation = irFac.create(op).asInstanceOf[IROperatorNode]
-
-        val newExp = new IRExpressionNode(Some(left),Some(right),Some(operation))
-        newExp.assignTemporary(irFac.newTemporary(newExp.getType()))
-        val res = irFac.newTemporary(newExp.getType())
-
-        new IRStatementNode(Some(res), Some(newExp))
-      }
-      case l :: Nil => {
-        val left = genIRDFS(l,vEnv,fEnv,irFac)
-        val newExp = new IRExpressionNode(Some(left),None,None)
-        newExp.assignTemporary(irFac.newTemporary(newExp.getType()))
-        new IRStatementNode(Some(irFac.newTemporary(newExp.getType())),Some(newExp))
-      }
-      case _ => throw new IRException("WTF I die Now!")
+  private def getLiteralFromString(str: String): IRConst[_] = {
+    val typ = getLiteralType(str)
+    typ match{
+      case IRType.I => new IRConst[Int](typ,str.toInt)
+      case IRType.F => new IRConst[Float](typ,str.toFloat)
+      case IRType.Z => new IRConst[Boolean](typ,str.toBoolean)
+      case IRType.U => new IRConst[String](typ,str)
     }
   }
 
