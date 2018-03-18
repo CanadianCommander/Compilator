@@ -1,10 +1,12 @@
 package compiler.ir
 
+import compiler.ast.nodes.OperationNode;
+
 class IROperator(operator: IROperator.Type,typ: IRType.Type) {
 
   override def toString(): String = {
     if(myOp != IROperator.NOP){
-      s"${IROperator.operatorToString(myOp)} ${IRType.typeToString(myType)}"
+      s"${IRType.typeToString(myType)} ${IROperator.operatorToString(myOp)}"
     }
     else {
       ""
@@ -31,6 +33,29 @@ object IROperator extends Enumeration{
       case EQ  => "=="
       case NOT => "!"
       case NOP => ""
+    }
+  }
+
+  def operatorFromString(str: String): Type = {
+    str match{
+      case "+" => ADD
+      case "-" => SUB
+      case "*" => MUL
+      case "/" => DIV
+      case "<" => LESS
+      case "==" => EQ
+      case "!" => NOT
+      case _ => NOP
+    }
+  }
+
+  def operatorFromAST(astOp: OperationNode, opTyp: IRType.Type): IROperator = {
+    val operand = operatorFromString(astOp.getOperator())
+    if(operand == LESS || operand == EQ){
+      new IROperator(operand,IRType.Z)
+    }
+    else {
+      new IROperator(operand, opTyp)
     }
   }
 

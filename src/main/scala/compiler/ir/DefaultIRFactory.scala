@@ -117,6 +117,28 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
         irBuilder.addInstruction(aStmt)
         tmpTarget
       }
+      case n: ReturnStatementNode => {
+        if(n.size > 0){
+          var retTmp = genIRDFS(n.getChild(0), irBuilder)
+          irBuilder.addInstruction(new IRReturnInstruction(retTmp))
+          None
+        }
+        else {
+          irBuilder.addInstruction(new IRReturnInstruction(None))
+          None
+        }
+      }
+      case n: PrintStatementNode => {
+        if(n.size > 0){
+          var printTarget = genIRDFS(n.getChild(0), irBuilder)
+          irBuilder.addInstruction(new IRPrintInstruction(printTarget, IRPrintInstruction.printTypeFromString(n.getText)))
+          None
+        }
+        else {
+          irBuilder.addInstruction(new IRPrintInstruction(None,IRPrintInstruction.printTypeFromString(n.getText)))
+          None
+        }
+      }
       case n: ExpressionNode => {
         val tmpLst = n.map((c) => {
           c match {
@@ -131,14 +153,21 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
 
         if(tmpLst.size > 1){
           var temporary = irBuilder.newTemporary(getOperatorType(n.getChild(1).asInstanceOf[OperationNode],tmpLst(0).getType))
-          //val firstStmt = new IRAssignInstruction(temporary,new IRExpression())
-          Some(irBuilder.newTemporary(IRType.I))
+          val firstStmt = new IRAssignInstruction(temporary,new IRExpression(Some(tmpLst(0)),Some(IROperator.operatorFromAST(n.getChild(1).asInstanceOf[OperationNode],tmpLst(0).getType)), Some(tmpLst(1))))
+          irBuilder.addInstruction(firstStmt)
+
+          for( i <- 2 until tmpLst.size){
+            var temporaryNew = irBuilder.newTemporary(getOperatorType(n.getChild(1).asInstanceOf[OperationNode],tmpLst(0).getType))
+            irBuilder.addInstruction(
+              new IRAssignInstruction(temporaryNew, new IRExpression(Some(temporary),Some(IROperator.operatorFromAST(n.getChild(1).asInstanceOf[OperationNode],tmpLst(0).getType)), Some(tmpLst(i))))
+            )
+            temporary = temporaryNew
+          }
+
+          Some(temporary)
         }
         else {
-          val temporary = irBuilder.newTemporary(tmpLst(0).getType())
-          val firstStmt = new IRAssignInstruction(temporary,new IRExpression(Some(IROperator.newNop()),Some(tmpLst(0))))
-          irBuilder.addInstruction(firstStmt)
-          Some(temporary)
+          Some(tmpLst(0))
         }
       }
       case n: AtomLiteralNode =>{
@@ -151,8 +180,17 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
       case n: AtomVariableReferenceNode => {
         irBuilder.lookupTemporary(n.getName())
       }
-      case n: AtomNode => {
-        Some(irBuilder.newTemporary(IRType.I))//TMPTMPTMTPTPTM
+      case n: AtomFunctionCallNode => {
+        val funcNode = irBuilder.lookupFunction(n.getName()).get
+        val fType = IRType.fromASTType(funcNode.getFunctionDeclaration().getType())
+
+        val tmpLst = n.getArgList().map((arg) => {
+          genIRDFS(arg, irBuilder).get
+        }).toList
+
+        val targTmp = irBuilder.newTemporary(fType)
+        irBuilder.addInstruction(new IRFunctionCallInstruction(n.getName(),tmpLst,targTmp))
+        Some(targTmp)
       }
       case n: NodeBase => {
         None

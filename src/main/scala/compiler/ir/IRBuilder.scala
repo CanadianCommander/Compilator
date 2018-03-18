@@ -46,7 +46,7 @@ class IRBuilder {
     functionEnv = fEnv
   }
 
-  private var idTrk: Int = 0
+  private var idTrk: Int = -1
   private def getNextTempId(): Int = {
     idTrk += 1
     idTrk
@@ -56,8 +56,10 @@ class IRBuilder {
   override def toString(): String = {
     var str = ""
     str = irFunctionDeclaration.get.toString()
+    str = str + "{\n"
     str = irTemps.foldLeft(str)((acc,t) => acc + t.toString())
     str = irInstructions.foldLeft(str)((acc,i) => acc + i.toString())
+    str = str + "}\n"
     str
   }
 
