@@ -8,7 +8,12 @@ class IRConst[T](typ: IRType.Type, value: T) extends IRInstructionBase {
   def getValue(): T = myValue
 
   override def toString(): String ={
-    myValue.toString()
+    if(myType == IRType.Z){
+      myValue.toString().capitalize
+    }
+    else{
+      myValue.toString()
+    }
   }
 
   private val myType = typ

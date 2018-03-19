@@ -7,7 +7,7 @@ class IRReturnInstruction(retTmp: Option[IRTemporaryInstruction]) extends IRInst
 
   override def toString(): String ={
     returnExpression match {
-      case Some(r) => s"RETURN T${r.getId()};\n"
+      case Some(r) => s"RETURN ${r.getString()};\n"
       case None => "RETURN;\n"
     }
   }

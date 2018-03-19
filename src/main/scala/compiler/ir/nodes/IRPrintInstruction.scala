@@ -16,7 +16,7 @@ class IRPrintInstruction(toPrint: Option[IRTemporaryInstruction], printT: IRPrin
 
     printTarget match {
       case Some(pt) => {
-         strStart + s"${IRType.typeToString(pt.getType())} T${pt.getId()};\n"
+         strStart + s"${IRType.typeToString(pt.getType())} ${pt.getString()};\n"
       }
       case None => {
         strStart + " ;\n"

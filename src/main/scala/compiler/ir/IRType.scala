@@ -28,6 +28,18 @@ object IRType extends Enumeration {
     }
   }
 
+  def removeArrayType(typ: Type): Type ={
+    typ match{
+      case AI => I
+      case AF => F
+      case AB => B
+      case AC => C
+      case AU => U
+      case AZ => Z
+      case _ => typ 
+    }
+  }
+
   def typeToString(typLst: List[Type]): String ={
     typLst.foldLeft("")((acc,t) => acc + typeToString(t))
   }

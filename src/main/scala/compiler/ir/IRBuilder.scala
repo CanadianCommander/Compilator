@@ -18,10 +18,19 @@ class IRBuilder {
     irInstructions
   }
 
-  def newTemporary(typ: IRType.Type, vName: String = "NaN"): IRTemporaryInstruction = {
+  def newTemporary(typ: IRType.Type, vName: String = "NaN", len: Int = 0): IRTemporaryInstruction = {
     var newTmp = new IRTemporaryInstruction(getNextTempId(),typ,vName)
     irTemps = irTemps :+ newTmp
+
+    if(len != 0){
+      addInstruction(new IRNewArrayInstruction(newTmp,len))
+    }
+
     newTmp
+  }
+
+  def newLabel():IRLabelInstruction ={
+    new IRLabelInstruction(getNextLabelId())
   }
 
   def lookupFunction(name: String): Option[FunctionNode] = {
@@ -52,6 +61,12 @@ class IRBuilder {
     idTrk
   }
 
+  private var idLabel: Int = -1
+  private def getNextLabelId(): Int = {
+    idLabel += 1
+    idLabel
+  }
+
 
   override def toString(): String = {
     var str = ""
@@ -59,10 +74,30 @@ class IRBuilder {
     str = str + "{\n"
     str = irTemps.foldLeft(str)((acc,t) => acc + t.toString())
     str = irInstructions.foldLeft(str)((acc,i) => acc + i.toString())
+
+    //inject return statement if one is not present
+    try{
+      irInstructions.last match{
+        case lst: IRReturnInstruction => {}
+        case lst: IRInstructionBase =>{
+          str = str + "RETURN;\n"
+        }
+      }
+    }
+    catch{
+      case e: Exception => {//list must be empty
+      }
+    }
+
     str = str + "}\n"
     str
   }
 
+  def setDref() = enableDref = true
+  def clearDref() = enableDref = false
+  def isDref(): Boolean = enableDref
+
+  private var enableDref: Boolean = false
   private var functionEnv: Map[String,FunctionNode] = Map()
   private var irTemps: List[IRTemporaryInstruction] = List()
   private var irInstructions: List[IRInstructionBase] = List()

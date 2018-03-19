@@ -6,7 +6,7 @@ class IRAssignLiteralInstruction(targ: IRTemporaryInstruction,lit: IRConst[_]) e
 
 
   override def toString(): String = {
-    s"T${target.getId()} := ${literal.toString()};\n"
+    s"${target.getString()} := ${literal.toString()};\n"
   }
 
   private var literal: IRConst[_] = lit

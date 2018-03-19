@@ -9,6 +9,7 @@ import compiler.typechecker.DefaultTypeCheckerFactory
 import compiler.CompilationManager
 import frontend.ui.TreePrinter
 import compiler.ast.NodeBase
+import compiler.ir._
 
 object Main {
   def main(args: Array[String]) = {
@@ -17,15 +18,19 @@ object Main {
       println(s"usage:java -jar ./Compilator-all.jar <.ulfile> ")
     }
     else {
-      val compManager = (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[NodeBase]]
-                            (new DefaultLexerFactory(), new DefaultParserFactory(),new DefaultTypeCheckerFactory()))
+      val compManager = (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[List[IRBuilder]]]
+                                    (new DefaultLexerFactory(), new DefaultParserFactory(),
+                                     new DefaultTypeCheckerFactory(), new DefaultIRFactory()))
       logMsg("-compilation started-", Level.INFO)
-      if(compManager.compile(args(0)).isEmpty){
+      val ir = compManager.compile(args(0))
+      if(ir.isEmpty){
         println("Compilation Failed")
         logMsg("Compilation Failed", Level.CERROR);
       }
       else{
-        println("Compilation Complete")
+        println("-Compilation Complete-")
+        println("PROG foobar")
+        ir.get.foreach((f) => print(f))
       }
       logMsg("-compilation complete-", Level.INFO)
     }

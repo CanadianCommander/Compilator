@@ -24,6 +24,22 @@ class AtomVariableReferenceNode(parserText : String) extends AtomNode(parserText
     }
   }
 
+  def getExpression(): ExpressionNode = {
+    if(isDereference()){
+      val exp = find((c) => {
+        c match {
+          case c: ExpressionNode => true
+          case _ => false
+        }
+      })
+
+      exp.getOrElse(throw new Exception("var ref that is dereference has no expression")).asInstanceOf[ExpressionNode]
+    }
+    else{
+      throw new Exception ("Var ref is not a dereference!")
+    }
+  }
+
   def isDereference(): Boolean = dRef
 
 

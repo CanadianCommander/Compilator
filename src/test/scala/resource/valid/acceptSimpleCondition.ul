@@ -1,0 +1,12 @@
+void main(){
+  foo(0);
+}
+
+void foo(int x){
+  if(x < 1){
+    print "FOOO";
+  }
+  else {
+    print "BAR";
+  }
+}

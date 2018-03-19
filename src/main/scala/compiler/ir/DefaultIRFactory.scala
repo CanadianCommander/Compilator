@@ -28,12 +28,12 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
         catch{
           case e: Exception => {
             println(s"IR Generation Failed with ${e.getMessage()}")
+            println(s"STACK Trace:\n${e.getStackTrace().foldLeft("")((str,x) => str + x + "\n")}")
             None
           }
         }
 
         if(irLst.size > 0){
-          irLst.foreach((f) => print(f))
           Some(irLst)
         }
         else{
@@ -67,7 +67,8 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
             case c: VariableDeclarationNode => true
             case _ => false
           }
-        }).map((vD) => irBuilder.newTemporary(IRType.fromASTType(vD.getType()), vD.asInstanceOf[VariableDeclarationNode].getName() )).toList
+        }).map((vD) => irBuilder.newTemporary(IRType.fromASTType(vD.getType()), vD.asInstanceOf[VariableDeclarationNode].getName(),
+          vD.asInstanceOf[VariableDeclarationNode].getTypeNode().getLen() )).toList
 
         // statments
         val stmtLst = n.getFunctionBody().filter((child) => {
@@ -106,16 +107,26 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
 
         if(n.size == 2){
           tmpExp = genIRDFS(n.getChild(1),irBuilder)
+
+          irBuilder.setDref()
           tmpTarget = genIRDFS(n.getChild(0),irBuilder)
+          irBuilder.clearDref()
         }
         else {
           tmpExp = genIRDFS(n.getChild(0),irBuilder)
-          tmpTarget = Some(irBuilder.newTemporary(tmpExp.get.getType()))
+          if(tmpExp != None){
+            tmpTarget = Some(irBuilder.newTemporary(tmpExp.get.getType()))
+          }
         }
 
-        val aStmt = new IRAssignInstruction(tmpTarget.get,new IRExpression(Some(IROperator.newNop()),tmpExp))
-        irBuilder.addInstruction(aStmt)
-        tmpTarget
+        if(tmpExp != None){
+          val aStmt = new IRAssignInstruction(tmpTarget.get,new IRExpression(Some(IROperator.newNop()),tmpExp))
+          irBuilder.addInstruction(aStmt)
+          tmpTarget
+        }
+        else {
+          None
+        }
       }
       case n: ReturnStatementNode => {
         if(n.size > 0){
@@ -139,17 +150,65 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
           None
         }
       }
+      case whileStmt: WhileStatementNode => {
+        val condition = whileStmt.getConditionExp()
+        val jmpLabelTop = irBuilder.newLabel()
+
+        irBuilder.addInstruction(jmpLabelTop)
+        val conditionTemp = genIRDFS(condition, irBuilder).get
+        val invTmp = irBuilder.newTemporary(conditionTemp.getType())
+
+        irBuilder.addInstruction(new IRAssignInstruction(invTmp,new IRExpression(Some(new IROperator(IROperator.NOT,invTmp.getType())),Some(conditionTemp))))
+        val jmpLabel = irBuilder.newLabel()
+        irBuilder.addInstruction(new IRGoToInstruction(Some(invTmp), jmpLabel))
+
+        genIRDFS(whileStmt.getBlock(), irBuilder)
+        irBuilder.addInstruction(new IRGoToInstruction(None,jmpLabelTop))
+
+        irBuilder.addInstruction(jmpLabel)
+        None
+      }
+      case n: StatementNode => {
+        // if statement
+        val ifStmt = n.getChild(0).asInstanceOf[IfStatementNode]
+        val condition = ifStmt.getConditionExp()
+        val conditionTemp = genIRDFS(condition, irBuilder).get
+        val invTmp = irBuilder.newTemporary(conditionTemp.getType())
+
+        irBuilder.addInstruction(new IRAssignInstruction(invTmp,new IRExpression(Some(new IROperator(IROperator.NOT,invTmp.getType())),Some(conditionTemp))))
+        val jmpLabel = irBuilder.newLabel()
+        irBuilder.addInstruction(new IRGoToInstruction(Some(invTmp), jmpLabel))
+
+        genIRDFS(ifStmt.getBlock(), irBuilder)
+
+        if(n.size > 1){
+          //has else
+          val elseStmt = n.getChild(1).asInstanceOf[ElseStatementNode]
+          val jmpOverElse = irBuilder.newLabel()
+
+          irBuilder.addInstruction(new IRGoToInstruction(None,jmpOverElse))
+          irBuilder.addInstruction(jmpLabel)
+
+          genIRDFS(elseStmt.getBlock(), irBuilder)
+          irBuilder.addInstruction(jmpOverElse)
+        }
+        else {
+          irBuilder.addInstruction(jmpLabel)
+        }
+
+        None
+      }
       case n: ExpressionNode => {
         val tmpLst = n.map((c) => {
           c match {
             case c: OperationNode => {
-              genIRDFS(c.getChild(0), irBuilder).get
+              genIRDFS(c.getChild(0), irBuilder)
             }
             case _ => {
-              genIRDFS(c, irBuilder).get
+              genIRDFS(c, irBuilder)
             }
           }
-        }).toList
+        }).filter((c) => c != None).map((c) => c.get).toList
 
         if(tmpLst.size > 1){
           var temporary = irBuilder.newTemporary(getOperatorType(n.getChild(1).asInstanceOf[OperationNode],tmpLst(0).getType))
@@ -166,8 +225,11 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
 
           Some(temporary)
         }
-        else {
+        else if(tmpLst.size == 1){
           Some(tmpLst(0))
+        }
+        else {
+          None
         }
       }
       case n: AtomLiteralNode =>{
@@ -178,7 +240,24 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
         Some(temp)
       }
       case n: AtomVariableReferenceNode => {
-        irBuilder.lookupTemporary(n.getName())
+        if(!n.isDereference()){
+          irBuilder.lookupTemporary(n.getName())
+        }
+        else {
+          val expTmp = genIRDFS(n.getExpression(),irBuilder)
+          val myTmp = irBuilder.lookupTemporary(n.getName()).get.getCopy()
+          myTmp.setDereferenceTemp(expTmp.get)
+
+          if(irBuilder.isDref()){
+            Some(myTmp)
+          }
+          else {
+            val newTmp = irBuilder.newTemporary(myTmp.getType())
+            irBuilder.addInstruction(new IRAssignInstruction(newTmp, new IRExpression(Some(IROperator.newNop()), Some(myTmp))))
+            newTmp.stripType()
+            Some(newTmp)
+          }
+        }
       }
       case n: AtomFunctionCallNode => {
         val funcNode = irBuilder.lookupFunction(n.getName()).get
@@ -188,9 +267,19 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
           genIRDFS(arg, irBuilder).get
         }).toList
 
-        val targTmp = irBuilder.newTemporary(fType)
-        irBuilder.addInstruction(new IRFunctionCallInstruction(n.getName(),tmpLst,targTmp))
-        Some(targTmp)
+        if(fType != IRType.V){
+          val targTmp = irBuilder.newTemporary(fType)
+          irBuilder.addInstruction(new IRFunctionCallInstruction(n.getName(),tmpLst,Some(targTmp)))
+          Some(targTmp)
+        }
+        else {
+          irBuilder.addInstruction(new IRFunctionCallInstruction(n.getName(),tmpLst,None))
+          None
+        }
+      }
+      case n: BlockNode => {
+        n.foreach((c) => genIRDFS(c,irBuilder))
+        None
       }
       case n: NodeBase => {
         None
@@ -212,11 +301,13 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
     val floatR = raw"\d+\.\d+".r
     val intR = raw"\d+".r
     val boolR = raw"(true|false)".r
+    val charR = raw"'[a-zA-Z]'".r
 
     str match{
       case floatR(_*) => IRType.F
       case intR(_*) => IRType.I
       case boolR(_*) => IRType.Z
+      case charR(_*) => IRType.C
       case _ => IRType.U
     }
   }
@@ -227,6 +318,7 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
       case IRType.I => new IRConst[Int](typ,str.toInt)
       case IRType.F => new IRConst[Float](typ,str.toFloat)
       case IRType.Z => new IRConst[Boolean](typ,str.toBoolean)
+      case IRType.C => new IRConst[String](typ,str)
       case IRType.U => new IRConst[String](typ,str)
     }
   }

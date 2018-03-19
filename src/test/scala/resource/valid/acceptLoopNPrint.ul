@@ -1,0 +1,13 @@
+void main(){
+  string [3] foo;
+  int i;
+  i = 0;
+  foo[0] = "FOO";
+  foo[1] = "-";
+  foo[2] = "BAR";
+
+  while(i < 3){
+    print foo[i];
+    i = i + 1;
+  }
+}

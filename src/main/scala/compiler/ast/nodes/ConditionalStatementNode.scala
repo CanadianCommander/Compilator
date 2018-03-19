@@ -22,6 +22,22 @@ class ConditionalStatementNode(parserText : String) extends StatementNode(parser
     }
   }
 
+  def getBlock(): BlockNode = {
+    val block = find((c) => {
+      c match {
+        case c: BlockNode => true
+        case _ => false
+      }
+    })
+
+    if(block != None){
+      block.get.asInstanceOf[BlockNode]
+    }
+    else {
+      throw new Exception("Malformed AST. Conditional Statement has no block!")
+    }
+  }
+
   def getKeyword(): String = {
     throw new UnsupportedOperationException("getKeyword not implemented")
   }

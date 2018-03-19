@@ -6,7 +6,7 @@ class IRAssignInstruction(targ: IRTemporaryInstruction, exp: IRExpression) exten
 
 
   override def toString(): String = {
-    s"T${target.getId()} := " + expression.toString() + ";\n"
+    s"${target.getString()} := " + expression.toString() + ";\n"
   }
 
   private var expression: IRExpression = exp

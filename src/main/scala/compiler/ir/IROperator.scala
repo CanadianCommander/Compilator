@@ -51,12 +51,7 @@ object IROperator extends Enumeration{
 
   def operatorFromAST(astOp: OperationNode, opTyp: IRType.Type): IROperator = {
     val operand = operatorFromString(astOp.getOperator())
-    if(operand == LESS || operand == EQ){
-      new IROperator(operand,IRType.Z)
-    }
-    else {
-      new IROperator(operand, opTyp)
-    }
+    new IROperator(operand, opTyp)
   }
 
   type Type = Value

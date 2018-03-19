@@ -10,10 +10,10 @@ class IRExpression(lft: Option[IRTemporaryInstruction], op: Option[IROperator], 
 
   override def toString():String = {
     if(!(left.isEmpty) && !(right.isEmpty)){
-      s"T${left.get.getId()} ${operator.get.toString()} T${right.get.getId()}"
+      s"${left.get.getString()} ${operator.get.toString()} ${right.get.getString()}"
     }
     else {
-      s"${operator.get.toString()} T${right.get.getId()}"
+      s"${operator.get.toString()} ${right.get.getString()}"
     }
   }
 
