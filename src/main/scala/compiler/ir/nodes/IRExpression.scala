@@ -17,6 +17,10 @@ class IRExpression(lft: Option[IRTemporaryInstruction], op: Option[IROperator], 
     }
   }
 
+  def getLeft(): Option[IRTemporaryInstruction] = left
+  def getRight(): Option[IRTemporaryInstruction] = right
+  def getOperator(): IROperator = operator.get 
+
   private var left: Option[IRTemporaryInstruction] = lft
   private var right: Option[IRTemporaryInstruction] = rht
   private var operator: Option[IROperator] = op

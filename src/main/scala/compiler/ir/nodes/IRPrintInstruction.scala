@@ -24,6 +24,9 @@ class IRPrintInstruction(toPrint: Option[IRTemporaryInstruction], printT: IRPrin
     }
   }
 
+  def getTemporary(): Option[IRTemporaryInstruction] = printTarget
+  def getPrintType(): IRPrintInstruction.printType = myType
+
   private var printTarget: Option[IRTemporaryInstruction] = toPrint
   private val myType: IRPrintInstruction.printType = printT
 }

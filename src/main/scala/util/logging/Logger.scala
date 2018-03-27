@@ -12,7 +12,6 @@ object Logger {
   }
 
   def openLog(clear: Boolean) = {
-    println(s"Logging to: $logFile")
 
     try{
       val lFile = new File(logFile)

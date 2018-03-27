@@ -36,8 +36,8 @@ class TypeCheckTests extends FlatSpec {
     printBarNotification(s"${ulFiles.size} files type checked")
   }
 
-  def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[NodeBase]] = {
-    return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[NodeBase]]
+  def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[NodeBase],Option[NodeBase]] = {
+    return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[NodeBase],Option[NodeBase]]
                                   (new DefaultLexerFactory(), new DefaultParserFactory(),
                                    new DefaultTypeCheckerFactory())
             )

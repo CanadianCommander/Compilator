@@ -9,6 +9,9 @@ class IRAssignLiteralInstruction(targ: IRTemporaryInstruction,lit: IRConst[_]) e
     s"${target.getString()} := ${literal.toString()};\n"
   }
 
+  def getLiteral(): IRConst[_] = literal
+  def getTemporary(): IRTemporaryInstruction = target
+
   private var literal: IRConst[_] = lit
   private var target: IRTemporaryInstruction = targ
 }

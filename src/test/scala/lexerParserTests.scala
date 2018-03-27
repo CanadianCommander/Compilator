@@ -33,8 +33,8 @@ class LexerTest extends FlatSpec {
     printBarNotification(s"${ulFiles.size} files tested for reject")
   }
 
-  def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,Boolean,Boolean] = {
-    return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Boolean,Boolean]
+  def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,Boolean,Boolean,Boolean] = {
+    return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Boolean,Boolean,Boolean]
                                   (new DefaultLexerFactory(), new DefaultParserFactory(),
                                    new lexerTestFactory())
             )

@@ -13,6 +13,9 @@ class IROperator(operator: IROperator.Type,typ: IRType.Type) {
     }
   }
 
+  def getType(): IRType.Type = myType
+  def getOperation(): IROperator.Type = myOp
+
   private var myType: IRType.Type = typ
   private var myOp: IROperator.Type = operator
 }

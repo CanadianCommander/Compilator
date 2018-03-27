@@ -18,16 +18,18 @@ class IRTests extends FlatSpec {
 
     var ulFiles = getULFilesInDir("src/test/scala/resource/valid/")
     ulFiles.foreach( (ulFile) => {
-      println(s"running type check on: $ulFile")
-      assert(compManager.compile(ulFile).nonEmpty)
+      println(s"running IR generation on: $ulFile")
+      val res =compManager.compile(ulFile)
+      assert(res.nonEmpty)
+      res.get.foreach((b) => print(b))
     });
 
     printBarNotification(s"${ulFiles.size} files type checked")
   }
 
 
-  def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[List[IRBuilder]]] = {
-    return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[List[IRBuilder]]]
+  def setup(): CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[List[IRBuilder]], Option[List[IRBuilder]]] = {
+    return (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[List[IRBuilder]], Option[List[IRBuilder]]]
                                   (new DefaultLexerFactory(), new DefaultParserFactory(),
                                    new DefaultTypeCheckerFactory(), new DefaultIRFactory())
             )

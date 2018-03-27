@@ -10,26 +10,28 @@ import util.SimpleFactoryNop
 // args:
 //  lexerFactory : factory function that constructs the lexer
 //  parserFactory: factory function that constructs the parser
-class CompilationManager[A,B,C,D](lexerFactory: SimpleFactory[FileInputStream,A], parserFactory: SimpleFactory[A,B] = new SimpleFactoryNop[A,B](),
-                              typecheckerFactory : SimpleFactory[B,C] = new SimpleFactoryNop[B,C](), irFactory: SimpleFactory[C,D] = new SimpleFactoryNop[C,D]()) {
+class CompilationManager[A,B,C,D,F](lexerFactory: SimpleFactory[FileInputStream,A], parserFactory: SimpleFactory[A,B] = new SimpleFactoryNop[A,B](),
+                              typecheckerFactory : SimpleFactory[B,C] = new SimpleFactoryNop[B,C](), irFactory: SimpleFactory[C,D] = new SimpleFactoryNop[C,D](),
+                              jasminFactory: SimpleFactory[D,F] = new SimpleFactoryNop[D,F]()) {
 
-  def compile(targetFile: String): D = {
+  def compile(targetFile: String): F = {
     try{
-      val out = irFac.create(
+      val out = jasminFactory.create(
+                irFac.create(
                 typecheckerFac.create(
                 parserFac.create(
-                lexerFac.create(getInputStream(targetFile))))
-      )
+                lexerFac.create(getInputStream(targetFile))))))
       return out
     }
     catch{
       case e : Exception => {
         logMsg(s"Unrecoverable error: $e", Level.CERROR)
-        return null.asInstanceOf[D]
+        logMsg(s"STACK Trace:\n${e.getStackTrace().foldLeft("")((str,x) => str + x + "\n")}", Level.INFO)
+        return null.asInstanceOf[F]
       }
     }
 
-    return null.asInstanceOf[D]
+    return null.asInstanceOf[F]
   }
 
 

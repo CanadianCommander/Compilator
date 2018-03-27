@@ -14,8 +14,33 @@ class IRBuilder {
     irFunctionDeclaration = Some(irFdec)
   }
 
+  def getFunctionDeclaration(): IRFunctionInstruction = {
+    if(!irFunctionDeclaration.isEmpty){
+      irFunctionDeclaration.get
+    }
+    else {
+      throw new IRException("IRBuilder has no function declaration!")
+    }
+  }
+
   def getInstructionList(): List[IRInstructionBase] = {
+    //inject return
+    if(irInstructions.size > 0){
+      irInstructions.last match {
+        case l : IRReturnInstruction => {}
+        case l : IRInstructionBase => {
+          irInstructions = irInstructions :+ (new IRReturnInstruction(None))
+        }
+      }
+    }
+    else {
+      irInstructions = irInstructions :+ (new IRReturnInstruction(None))
+    }
     irInstructions
+  }
+
+  def getTemporaryList(): List[IRTemporaryInstruction] = {
+    irTemps
   }
 
   def newTemporary(typ: IRType.Type, vName: String = "NaN", len: Int = 0): IRTemporaryInstruction = {

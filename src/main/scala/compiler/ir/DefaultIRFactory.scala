@@ -269,11 +269,11 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
 
         if(fType != IRType.V){
           val targTmp = irBuilder.newTemporary(fType)
-          irBuilder.addInstruction(new IRFunctionCallInstruction(n.getName(),tmpLst,Some(targTmp)))
+          irBuilder.addInstruction(new IRFunctionCallInstruction(n.getName(),tmpLst,Some(targTmp),fType))
           Some(targTmp)
         }
         else {
-          irBuilder.addInstruction(new IRFunctionCallInstruction(n.getName(),tmpLst,None))
+          irBuilder.addInstruction(new IRFunctionCallInstruction(n.getName(),tmpLst,None,fType))
           None
         }
       }

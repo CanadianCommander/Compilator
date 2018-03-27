@@ -14,6 +14,9 @@ class IRGoToInstruction(condition: Option[IRTemporaryInstruction], jumpTarget: I
     }
   }
 
+  def getCondition(): Option[IRTemporaryInstruction] = myCond
+  def getJumpTarget(): IRLabelInstruction = jmp 
+
 
   private val myCond: Option[IRTemporaryInstruction] = condition
   private val jmp: IRLabelInstruction = jumpTarget

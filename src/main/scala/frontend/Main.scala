@@ -5,6 +5,7 @@ import org.antlr.runtime._
 import util.logging.Logger._
 import compiler.lexer.DefaultLexerFactory
 import compiler.parser.DefaultParserFactory
+import compiler.jasmin.DefaultJasminFactory
 import compiler.typechecker.DefaultTypeCheckerFactory
 import compiler.CompilationManager
 import frontend.ui.TreePrinter
@@ -18,22 +19,31 @@ object Main {
       println(s"usage:java -jar ./Compilator-all.jar <.ulfile> ")
     }
     else {
-      val compManager = (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[List[IRBuilder]]]
+      val compManager = (new CompilationManager[ulNoActionsLexer,ulNoActionsParser,Option[NodeBase],Option[List[IRBuilder]], Option[String]]
                                     (new DefaultLexerFactory(), new DefaultParserFactory(),
-                                     new DefaultTypeCheckerFactory(), new DefaultIRFactory()))
+                                     new DefaultTypeCheckerFactory(), new DefaultIRFactory(), new DefaultJasminFactory(getBaseName(args(0)))))
       logMsg("-compilation started-", Level.INFO)
-      val ir = compManager.compile(args(0))
-      if(ir.isEmpty){
-        println("Compilation Failed")
+      val jasmin = compManager.compile(args(0))
+      if(jasmin == null || jasmin.isEmpty){
+        println("Compilation Failed see log for details")
         logMsg("Compilation Failed", Level.CERROR);
       }
       else{
-        println("-Compilation Complete-")
-        println("PROG foobar")
-        ir.get.foreach((f) => print(f))
+        logMsg("-Compilation Complete-", Level.INFO)
+        print(jasmin.get)
       }
       logMsg("-compilation complete-", Level.INFO)
     }
 
+  }
+
+  // come on java, no out of the box base name function! plz
+  def getBaseName(str: String): String ={
+    val bname = raw".*/([\d\w\W]+)\.[\W\w\d]+".r
+
+    str match{
+      case bname(s) => s
+      case _ => "NAME_ERROR"
+    }
   }
 }

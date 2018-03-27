@@ -9,6 +9,9 @@ class IRNewArrayInstruction(tmp: IRTemporaryInstruction, siz: Int) extends IRIns
     s"${targetTmp.getString()} := NEWARRAY${IRType.removeArrayType(targetTmp.getType())} ${arraySize};\n"
   }
 
+  def getArraySize(): Int = arraySize
+  def getTemporary(): IRTemporaryInstruction = targetTmp
+
   private val arraySize = siz
   private val targetTmp = tmp
 }

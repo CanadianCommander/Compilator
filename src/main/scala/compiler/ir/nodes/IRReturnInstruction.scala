@@ -12,5 +12,7 @@ class IRReturnInstruction(retTmp: Option[IRTemporaryInstruction]) extends IRInst
     }
   }
 
+  def getTemporary(): Option[IRTemporaryInstruction] = returnExpression
+
   private var returnExpression: Option[IRTemporaryInstruction] = retTmp
 }
