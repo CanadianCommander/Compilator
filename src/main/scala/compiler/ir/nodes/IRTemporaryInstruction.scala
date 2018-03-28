@@ -41,6 +41,10 @@ class IRTemporaryInstruction(id: Int, typ: IRType.Type, vName: String = "") exte
     myTyp = IRType.removeArrayType(myTyp)
   }
 
+  def getDerefTemp(): Option[IRTemporaryInstruction] = myDerefExp
+  def isDereference(): Boolean = myDerefExp != None 
+
+
   protected var myDerefExp: Option[IRTemporaryInstruction] = None
   protected var myTyp: IRType.Type = typ
   protected val tmpId: Int = id

@@ -114,7 +114,7 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
 
             if(tmp.getType() == IRType.AU){
               str += s"ldc ${aSize} \n"
-              str += s"anewarray Ljava/lang/String;\n"
+              str += s"anewarray java/lang/String\n"
               str += s"astore ${tmp.getId()} \n"
             }
             else {
@@ -157,16 +157,55 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
             val opType = op.getType()
             val opOperand = op.getOperation()
 
+            var storeStr = s"${irTypeToInstructionPrefix(targ.getType())}store ${targ.getId()}\n"
+            if(targ.isDereference()){
+              //handle array derference special case
+              val dTmp = targ.getDerefTemp()
+              storeStr = s"aload ${targ.getId()} \n"
+              storeStr += "swap \n"
+              storeStr += s"iload ${dTmp.get.getId()} \n"
+              storeStr += "swap \n"
+              storeStr += s"${irTypeToInstructionPrefix(targ.getType())}store \n"
+            }
+
             if(exp.getLeft() == None){
               if(opOperand == IROperator.NOT){
                 str += s"ldc 1\n"
                 str += s"iload ${right.getId()}\n"
                 str += s"${irTypeToInstructionPrefix(opType)}${irOperatorToInstruction(opOperand)}\n"
-                str += s"${irTypeToInstructionPrefix(targ.getType())}store ${targ.getId()}\n"
+                str += storeStr
               }
               else if (opOperand == IROperator.NOP){
-                str += s"${irTypeToInstructionPrefix(right.getType())}load ${right.getId()}\n"
-                str += s"${irTypeToInstructionPrefix(targ.getType())}store ${targ.getId()}\n"
+                if(right.isDereference()){
+                  if(targ.isDereference()){
+                    val dTmp = targ.getDerefTemp().get
+                    str += s"aload ${targ.getId()} \n"
+                    str += s"iload ${dTmp.getId()} \n"
+                    str += s"aload ${right.getId()} \n"
+                    str += s"iload ${right.getDerefTemp().get.getId()} \n"
+                    str += s"${irTypeToInstructionPrefix(right.getType())}load \n"
+                    str += s"${irTypeToInstructionPrefix(targ.getType())}store \n"
+                  }
+                  else {
+                    str += s"aload ${right.getId()} \n"
+                    str += s"iload ${right.getDerefTemp().get.getId()} \n"
+                    str += s"${irTypeToInstructionPrefix(right.getType())}load \n"
+                    str += storeStr
+                  }
+                }
+                else {
+                  if(targ.isDereference()){
+                    val dTmp = targ.getDerefTemp().get
+                    str += s"aload ${targ.getId()} \n"
+                    str += s"iload ${dTmp.getId()} \n"
+                    str += s"${irTypeToInstructionPrefix(right.getType())}load ${right.getId()}\n"
+                    str += s"${irTypeToInstructionPrefix(targ.getType())}store \n"
+                  }
+                  else {
+                    str += s"${irTypeToInstructionPrefix(right.getType())}load ${right.getId()}\n"
+                    str += storeStr
+                  }
+                }
               }
             }
             else{
@@ -177,7 +216,7 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
               if(opOperand != IROperator.LESS && opOperand != IROperator.EQ){
                 //non conditional
                 str += s"${irTypeToInstructionPrefix(opType)}${irOperatorToInstruction(opOperand)}\n"
-                str += s"${irTypeToInstructionPrefix(targ.getType())}store ${targ.getId()} \n"
+                str += storeStr
               }
               else {
                 //conditional
@@ -191,7 +230,7 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
                 str += s"${labelTrue}:\n"
                 str += "ldc 1 \n"
                 str += s"${labelDone}:\n"
-                str += s"istore ${targ.getId()} \n"
+                str += storeStr
               }
 
             }
@@ -328,6 +367,21 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
 
 }
 
+
+/*
+getstatic java/lang/System/out Ljava/io/PrintStream;
+iload 2
+invokevirtual java/io/PrintStream/print(I)V
+getstatic java/lang/System/out Ljava/io/PrintStream;
+iload 0
+invokevirtual java/io/PrintStream/println(I)V
+ldc "HELLO WORLD"
+astore 8
+getstatic java/lang/System/out Ljava/io/PrintStream;
+aload 8
+invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V
+return
+*/
 
 /* JASMIN EXAMPLE
 .source test.ir

@@ -1,0 +1,5 @@
+void main(){
+  string[1] a;
+  a[0] = "FOO";
+  print a[0];
+}
