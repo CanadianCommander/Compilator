@@ -5,8 +5,12 @@ int foo (int x, float y, string z, char c, boolean a) {
 	boolean aa;
 	int	xx;
 
+  zz = "fds";
+  yy = 1.2;
+  xx = 42;
+
 	while (x < 10) {
-		;
+		x = x + 1;
 	}
 
 	if (zz == "abc") {

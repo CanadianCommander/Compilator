@@ -1,6 +1,8 @@
 void main(){
   string bob;
   int[32] frank;
+  bob = "12345";
+  frank[0] = 3;
   function123(bob, frank, 4 + 4, bird(42, true));
 }
 

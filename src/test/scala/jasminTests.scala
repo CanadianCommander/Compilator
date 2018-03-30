@@ -11,6 +11,8 @@ import compiler.jasmin.DefaultJasminFactory
 import compiler.ir._
 import util.SimpleFactory
 import util.General._
+import sys.process._
+import java.io.{PrintWriter, BufferedWriter, FileWriter, IOException, File}
 
 class JasminTests extends FlatSpec {
 
@@ -22,7 +24,26 @@ class JasminTests extends FlatSpec {
       println(s"running jasmin generation on: $ulFile")
       val jasminString = compManager.compile(ulFile)
       assert(jasminString.nonEmpty)
-      print(jasminString.get)
+
+      //run the code!
+      val tFile = new File("tmp.j")
+      if(tFile.isFile){
+        tFile.delete()
+      }
+      val jFile = new File("foobar.class")
+      if(jFile.isFile){
+        jFile.delete()
+      }
+      var outStream = new PrintWriter(new BufferedWriter( new FileWriter(tFile)))
+      outStream.print(jasminString.get)
+      outStream.flush()
+      outStream = null
+
+
+      var exitCode = "java -jar 3rdParty/jasmin-2.4/jasmin.jar tmp.j".!
+      assert(exitCode == 0)
+      exitCode = "java foobar".!
+      assert(exitCode == 0)
     });
 
     printBarNotification(s"${ulFiles.size} files type checked")

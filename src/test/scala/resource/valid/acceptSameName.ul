@@ -4,5 +4,6 @@ void main(){
 
 int foo(int a){
   int foo;
+  foo = 3;
   return foo + 2;
 }

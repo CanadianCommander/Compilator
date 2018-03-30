@@ -318,7 +318,7 @@ class DefaultIRFactory extends SimpleFactory[Option[NodeBase], Option[List[IRBui
       case IRType.I => new IRConst[Int](typ,str.toInt)
       case IRType.F => new IRConst[Float](typ,str.toFloat)
       case IRType.Z => new IRConst[Boolean](typ,str.toBoolean)
-      case IRType.C => new IRConst[String](typ,str)
+      case IRType.C => new IRConst[Char](typ,str.charAt(1))
       case IRType.U => new IRConst[String](typ,str)
     }
   }

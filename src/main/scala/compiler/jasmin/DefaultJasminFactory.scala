@@ -43,10 +43,10 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
     //function declaration
     str += s".method public static ${fName}(${typeToString(functionDecl.getArgs())})${typeToString(functionDecl.getReturnT())}\n"
     str += s".limit locals ${temporaryList.size}\n"
-    temporaryList.foreach((t) => {
+    //temporaryList.foreach((t) => {
       	//.var 0 is T0  I from L_0 to L_1
-        str += s".var ${t.getId()} is T${t.getId} ${typeToString(t.getType())} from F_START to F_END \n"
-    })
+    //    str += s".var ${t.getId()} is T${t.getId} ${typeToString(t.getType())} from F_START to F_END \n"
+    //})
     str += ".limit stack 100\n"
     str += "F_START: \n"
 
@@ -65,6 +65,10 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
                 str += "ldc 0 \n"
               }
             }
+            else if (lit.getType() == IRType.C){
+              val myChar = lit.getValue().asInstanceOf[Char]
+              str += s"ldc ${myChar.toInt} \n"
+            }
             else {
               str += s"ldc ${lit.toString()}\n"
             }
@@ -77,7 +81,14 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
             val retType = i.getReturnType()
 
             //push arguments on stack
-            argList.foreach((a) => str += s"${irTypeToInstructionPrefix(a.getType())}load ${a.getId()}\n")
+            argList.foreach((a) => {
+              if(isArrayType(a.getType())){
+                str += s"aload ${a.getId()} \n"
+              }
+              else {
+                str += s"${irTypeToInstructionPrefix(a.getType())}load ${a.getId()}\n"
+              }
+            })
 
             //call
             str += s"invokestatic ${className}/${funcName}(${typeToString(argList.map((a) => a.getType()))})${typeToString(retType)} \n"
@@ -120,7 +131,7 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
             else {
               str += s"ldc ${aSize} \n"
               str += s"newarray ${irTypeToJavaArrayType(tmp.getType())} \n"
-              str += s"${irTypeToInstructionPrefix(tmp.getType())}store ${tmp.getId()} \n"
+              str += s"astore ${tmp.getId()} \n"
             }
           }
           case i: IRPrintInstruction => {
@@ -132,17 +143,31 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
             }
 
             if(target.nonEmpty){
-              str += "getstatic java/lang/System/out Ljava/io/PrintStream; \n"
-              str += s"${irTypeToInstructionPrefix(target.get.getType())}load ${target.get.getId()} \n"
-              str += s"invokevirtual java/io/PrintStream/${printStr}(${typeToString(target.get.getType())})V \n"
+              if(target.get.getType() == IRType.C){
+                str += "getstatic java/lang/System/out Ljava/io/PrintStream; \n"
+                str += s"iload ${target.get.getId()} \n"
+                str += "i2c \n"
+                str += s"invokevirtual java/io/PrintStream/${printStr}(C)V \n"
+              }
+              else {
+                str += "getstatic java/lang/System/out Ljava/io/PrintStream; \n"
+                str += s"${irTypeToInstructionPrefix(target.get.getType())}load ${target.get.getId()} \n"
+                str += s"invokevirtual java/io/PrintStream/${printStr}(${typeToString(target.get.getType())})V \n"
+              }
             }
           }
           case i: IRReturnInstruction => {
             val retVal = i.getTemporary()
 
             if(retVal.nonEmpty){
-              str += s"${irTypeToInstructionPrefix(retVal.get.getType())}load ${retVal.get.getId()} \n"
-              str += s"${irTypeToInstructionPrefix(retVal.get.getType())}return \n"
+              if(isArrayType(retVal.get.getType())){
+                str += s"aload ${retVal.get.getId()} \n"
+                str += s"areturn \n"
+              }
+              else {
+                str += s"${irTypeToInstructionPrefix(retVal.get.getType())}load ${retVal.get.getId()} \n"
+                str += s"${irTypeToInstructionPrefix(retVal.get.getType())}return \n"
+              }
             }
             else {
               str += "return \n"
@@ -168,7 +193,7 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
               storeStr += s"${irTypeToInstructionPrefix(targ.getType())}store \n"
             }
 
-            if(exp.getLeft() == None){
+            if(exp.getLeft() == None && right != None){
               if(opOperand == IROperator.NOT){
                 str += s"ldc 1\n"
                 str += s"iload ${right.getId()}\n"
@@ -202,29 +227,60 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
                     str += s"${irTypeToInstructionPrefix(targ.getType())}store \n"
                   }
                   else {
-                    str += s"${irTypeToInstructionPrefix(right.getType())}load ${right.getId()}\n"
-                    str += storeStr
+                    if(isArrayType(targ.getType())){
+                      str += s"aload ${right.getId()} \n"
+                      str += s"astore ${targ.getId()} \n"
+                    }
+                    else {
+                      str += s"${irTypeToInstructionPrefix(right.getType())}load ${right.getId()}\n"
+                      str += storeStr
+                    }
                   }
                 }
               }
             }
-            else{
+            else if(right != None){
               val left  = exp.getLeft().get
-              str += s"${irTypeToInstructionPrefix(left.getType())}load ${left.getId()}\n"
-              str += s"${irTypeToInstructionPrefix(right.getType())}load ${right.getId()}\n"
 
               if(opOperand != IROperator.LESS && opOperand != IROperator.EQ){
                 //non conditional
-                str += s"${irTypeToInstructionPrefix(opType)}${irOperatorToInstruction(opOperand)}\n"
+                if(left.getType() == IRType.U){
+                  //string concat
+                  str += "new java/lang/StringBuffer \n"
+                  str += "dup \n"
+                  str += "invokenonvirtual java/lang/StringBuffer/<init>()V \n"
+                  str += s"aload ${left.getId()} \n"
+                  str += "invokevirtual java/lang/StringBuffer/append(Ljava/lang/String;)Ljava/lang/StringBuffer; \n"
+                  str += s"aload ${right.getId()} \n"
+                  str += "invokevirtual java/lang/StringBuffer/append(Ljava/lang/String;)Ljava/lang/StringBuffer; \n"
+                  str += "invokevirtual java/lang/StringBuffer/toString()Ljava/lang/String; \n"
+                }
+                else {
+                  str += s"${irTypeToInstructionPrefix(left.getType())}load ${left.getId()}\n"
+                  str += s"${irTypeToInstructionPrefix(right.getType())}load ${right.getId()}\n"
+                  str += s"${irTypeToInstructionPrefix(opType)}${irOperatorToInstruction(opOperand)}\n"
+                }
+
                 str += storeStr
               }
               else {
                 //conditional
+                str += s"${irTypeToInstructionPrefix(left.getType())}load ${left.getId()}\n"
+                str += s"${irTypeToInstructionPrefix(right.getType())}load ${right.getId()}\n"
+
                 val labelTrue = s"CON_TRUE_${nextNum()}"
                 val labelDone = s"CON_DONE_${nextNum()}"
 
-                str += s"${irTypeToInstructionPrefix(left.getType())}sub\n"
-                str += s"${irTypeToInstructionPrefix(opType)}${irOperatorToInstruction(opOperand)} ${labelTrue} \n"
+                if(left.getType() == IRType.F){
+                  str += "fcmpg \n"
+                }
+                else if (left.getType() == IRType.U){
+                  str += "invokevirtual java/lang/String/compareTo(Ljava/lang/String;)I \n"
+                }
+                else {
+                  str += s"${irTypeToInstructionPrefix(left.getType())}sub\n"
+                }
+                str += s"i${irOperatorToInstruction(opOperand)} ${labelTrue} \n"
                 str += "ldc 0\n"
                 str += s"goto ${labelDone}\n"
                 str += s"${labelTrue}:\n"
@@ -268,14 +324,14 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
       case IRType.I => "i"
       case IRType.F => "f"
       case IRType.B => "b"
-      case IRType.C => "c"
+      case IRType.C => "i"
       case IRType.U => "a"
       case IRType.Z => "i"
       case IRType.V => "v"
       case IRType.AI => "ia"
       case IRType.AF => "fa"
       case IRType.AB => "ba"
-      case IRType.AC => "ca"
+      case IRType.AC => "ia"
       case IRType.AU => "aa"
       case IRType.AZ => "ia"
       case IRType.ARG => "BAD"
@@ -288,16 +344,16 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
       case IRType.I => "I"
       case IRType.F => "F"
       case IRType.B => "B"
-      case IRType.C => "C"
+      case IRType.C => "I"
       case IRType.U => "Ljava/lang/String;"
       case IRType.Z => "I"
       case IRType.V => "V"
-      case IRType.AI => "IA"
-      case IRType.AF => "FA"
-      case IRType.AB => "BA"
-      case IRType.AC => "CA"
+      case IRType.AI => "[I"
+      case IRType.AF => "[F"
+      case IRType.AB => "[B"
+      case IRType.AC => "[I"
       case IRType.AU => "[Ljava/lang/String;"
-      case IRType.AZ => "IA"
+      case IRType.AZ => "[I"
       case IRType.ARG => "BAD"
       case IRType.BAD => "BAD"
     }
@@ -312,14 +368,14 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
     }
   }
 
-  def irTypeToJavaArrayType(typ : IRType.Type): Int = {
+  def irTypeToJavaArrayType(typ : IRType.Type): String = {
     typ match{
-      case IRType.AI => 10
-      case IRType.AF => 6
-      case IRType.AB => 8
-      case IRType.AC => 5
+      case IRType.AI => "int"
+      case IRType.AF => "float"
+      case IRType.AB => "byte"
+      case IRType.AC => "int"
       case IRType.AU => throw new Exception("you must use anewarray you dumb!")
-      case IRType.AZ => 4
+      case IRType.AZ => "boolean"
       case _ => throw new Exception("irTypeToJavaArrayType, typ is not array type!")
     }
   }

@@ -1,0 +1,18 @@
+void main(){
+  char[2] x;
+  x[0] = 'h';
+  x[1] = 's';
+
+  print x[0];
+  print " ";
+  println x[1];
+
+  bla(x);
+}
+
+void bla(char[2] b){
+  println "HU ";
+  println b[0];
+  println "  WUT? ";
+  println b[1];
+}

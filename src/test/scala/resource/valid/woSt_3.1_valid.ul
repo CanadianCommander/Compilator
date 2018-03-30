@@ -3,6 +3,8 @@ void main() {
     int a;
     int b;
 
+    a = 324;
+
     // 3.1.1
     if (true) {
         print "true if statement";

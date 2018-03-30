@@ -5,6 +5,7 @@ void main(){
 void foobar (int z, float y) {
 	int s;
 	int x;
+  s = 2;
   x = foo() + 2;
 	x = s + x;
 }
