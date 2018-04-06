@@ -39,10 +39,10 @@ object Main {
 
   // come on java, no out of the box base name function! plz
   def getBaseName(str: String): String ={
-    val bname = raw".*/([\d\w\W]+)\.[\W\w\d]+".r
+    val bname = raw"(.*/)?([\d\w\W]+)\.[\W\w\d]+".r
 
     str match{
-      case bname(s) => s
+      case bname(_, s) => s
       case _ => "NAME_ERROR"
     }
   }

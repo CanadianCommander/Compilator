@@ -275,6 +275,7 @@ class DefaultJasminFactory(className: String) extends SimpleFactory[Option[List[
                   str += "fcmpg \n"
                 }
                 else if (left.getType() == IRType.U){
+                  str += "swap \n"
                   str += "invokevirtual java/lang/String/compareTo(Ljava/lang/String;)I \n"
                 }
                 else {
